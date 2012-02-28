@@ -1,0 +1,29 @@
+Language Translation Utility
+-------------------------------------------------------------------------------
+This project has been designed to be used by developers who have a need to globalize their solution through the use of resource files.  The idea is that English resource file is used as a template to go through and get the individual translations of each word or phrase so that it can be translated into the specified language.
+
+Step 1:
+Create your English string resource file with all of the words that you want to translate.
+
+Step 2:
+Create a new Blank string resource file for the language that you want to translate your data into.
+
+Step 3:
+Check the "Use Google for the translation engine" check box and select the specified language and click Translate
+
+Step 4:
+Have your translated values check (or do it yourself) to make sure that they make sense in the context of the application.
+
+Step 5:
+Use the blank *.xls (or *.xlsx) file template to add any corrections to the translation that you want.
+
+Step 6:
+Run the application again, this time browse for your translations file and click Translate.  
+
+The application should prompt you before overwriting any translations that already exist in the file that do not match the translated value.
+
+Please if you have any improvements, fork this project and then submit a pull request.  This is version 1.0 of the software and may not provide all of the needed functionality.
+
+Known Issues
+-------------------------------------------------------------------------------
+This project does not do full Unicode translations to things like Chinese or Russian, etc.
