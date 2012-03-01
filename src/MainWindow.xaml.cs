@@ -354,9 +354,12 @@ namespace TranslationHelper
                     || this.TargetFile.EndsWith("resx") == false)
                     throw new Exception("You have not filled in a value for the Target Resource File. (*.resx)");
 
-                if (String.IsNullOrWhiteSpace(this.TranslationFile) 
-                    || (this.TranslationFile.EndsWith("xls") == false & this.TranslationFile.EndsWith("xlsx") == false))
-                    throw new Exception("You have not filled in a value for the Translations File. (*.xls, *.xlsx)");
+                if (chkTranslateFromGoogle.IsChecked != true)
+                {
+                    if (String.IsNullOrWhiteSpace(this.TranslationFile)
+                        || (this.TranslationFile.EndsWith("xls") == false & this.TranslationFile.EndsWith("xlsx") == false))
+                        throw new Exception("You have not filled in a value for the Translations File. (*.xls, *.xlsx)");
+                }
 
                 #endregion
 
