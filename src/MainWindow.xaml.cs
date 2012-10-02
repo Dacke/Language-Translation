@@ -22,6 +22,7 @@ namespace TranslationHelper
     {
         #region Constants
 
+        //  TODO: MOVE TO Resource File Helper.
         private const string rootElement = "root";
         private const string dataElement = "data";
         private const string dataNameAttribute = "name";
@@ -129,6 +130,8 @@ namespace TranslationHelper
 
             try
             {
+                var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile);
+
                 var xDocSource = XDocument.Load(this.SourceFile);
                 var xDocTarget = XDocument.Load(this.TargetFile);
                 var excelWb = excelApp.Workbooks.Open(this.TranslationFile, false, true);
@@ -145,21 +148,26 @@ namespace TranslationHelper
                     if (String.IsNullOrWhiteSpace(englishValue) || String.IsNullOrWhiteSpace(translatedValue) || translatedValue.ToLower() == translationToSkip)
                         continue;
 
-                    //  Pull the information from the source resource file.
-                    var sourceValue =
-                        xDocSource.Element(rootElement).Elements(dataElement).FirstOrDefault(se => se.Element(valueElement).Value.Trim().ToLower() == englishValue);
-                    if (sourceValue == null) continue;
+                    var sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
+                    if (sourceValues.Any() == false) continue;
+                    //  TODO: Fix this so that you throw up a question/warning that you have multiple keys for the same value
+                    //        in many cases this is due to repeated text in a resource file value 
+                    KeyValuePair<string, string> sourceValue = sourceValues.First();
+                    var dataAttributeValue = sourceValue.Value;
+                    
+                    ////  Get the data attribute.
+                    //var dataAttributeValue = sourceValue.Attribute(dataNameAttribute).Value;
+                    //if (String.IsNullOrWhiteSpace(dataAttributeValue))
+                    //    continue;
 
-                    //  Get the data attribute.
-                    var dataAttributeValue = sourceValue.Attribute(dataNameAttribute).Value;
-                    if (String.IsNullOrWhiteSpace(dataAttributeValue))
-                        continue;
-
-                    var targetValue = xDocTarget.Element(rootElement).Elements(dataElement)
-                        .FirstOrDefault(se => se.Attribute(dataNameAttribute).Value.Trim().ToLower() == dataAttributeValue.Trim().ToLower());
-                    if (targetValue != null)
+                    var targetValues = resourceFileHelper.GetNameValuesFromTarget(sourceValue.Key);
+                    //  TODO: Fix this so that you throw up a question/warning that you have multiple keys for the same value
+                    //        in many cases this is due to repeated text in a resource file value 
+                    if (targetValues.Any())
                     {
-                        var existingTargetValue = targetValue.Element(valueElement).Value;
+                        var targetValue = targetValues.First();
+                        //var existingTargetValue = targetValue.Element(valueElement).Value;
+                        var existingTargetValue = targetValue.Value;
 
                         if (existingTargetValue != translatedValue)
                         {
@@ -171,7 +179,8 @@ namespace TranslationHelper
                             switch (answer)
                             {
                                 case MessageBoxResult.Yes:
-                                    targetValue.Element(valueElement).Value = translatedValue;
+                                    //  TODO: Write this back
+                                    //targetValue.Element(valueElement).Value = translatedValue;
                                     dirtyFile = true;
                                     break;
                                 case MessageBoxResult.Cancel:
