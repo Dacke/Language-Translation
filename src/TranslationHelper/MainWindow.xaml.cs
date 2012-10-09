@@ -20,13 +20,9 @@ namespace TranslationHelper
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        #region Constants
+        #region Fields
 
-        //  TODO: MOVE TO Resource File Helper.
-        private const string rootElement = "root";
-        private const string dataElement = "data";
-        private const string dataNameAttribute = "name";
-        private const string valueElement = "value";
+        private ObservableCollection<String> translatedItems;
 
         #endregion
 
@@ -35,14 +31,22 @@ namespace TranslationHelper
         public string SourceFile { get; set; }
         public string TargetFile { get; set; }
         public string TranslationFile { get; set; }
-        public ObservableCollection<string> TranslatedItems { get; private set; }
+        public ObservableCollection<String> TranslatedItems
+        {
+            get { return translatedItems; }
+            private set
+            {
+                translatedItems = value;
+                PropertyChanged(this, new PropertyChangedEventArgs("TranslatedItems"));
+            }
+        }
         public ObservableCollection<LanguageCode> LanguageCodes { get; private set; }
 
         #endregion
 
         #region Events
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
         #endregion
 
@@ -160,7 +164,7 @@ namespace TranslationHelper
                     //if (String.IsNullOrWhiteSpace(dataAttributeValue))
                     //    continue;
 
-                    var targetValues = resourceFileHelper.GetNameValuesFromTarget(sourceValue.Key);
+                    var targetValues = resourceFileHelper.GetNameValuesFromTargetUsingValue(sourceValue.Key);
                     //  TODO: Fix this so that you throw up a question/warning that you have multiple keys for the same value
                     //        in many cases this is due to repeated text in a resource file value 
                     if (targetValues.Any())
@@ -193,10 +197,10 @@ namespace TranslationHelper
                     }
                     else
                     {
-                        xDocTarget.Element(rootElement).Add(new XElement(dataElement,
-                                                                         new XAttribute(dataNameAttribute, dataAttributeValue),
-                                                                         new XAttribute(XNamespace.Xml + "space", "preserve"),
-                                                                         new XElement(valueElement, translatedValue)));
+                        //xDocTarget.Element(rootElement).Add(new XElement(dataElement,
+                        //                                                 new XAttribute(dataNameAttribute, dataAttributeValue),
+                        //                                                 new XAttribute(XNamespace.Xml + "space", "preserve"),
+                        //                                                 new XElement(valueElement, translatedValue)));
                         dirtyFile = true;
                     }
 
@@ -239,76 +243,47 @@ namespace TranslationHelper
         }
 
         private void ParseFromGoogle()
-        {
+        {            
             var translateHelper = new GoogleTranslateHelper()
                                       {
                                           ToCulture = ((LanguageCode)comboLanguageCode.SelectedValue).Code
                                       };
 
-            var xDocSource = XDocument.Load(this.SourceFile);
-            var xDocTarget = XDocument.Load(this.TargetFile);
-            var dirtyFile = false;
-
-            //  Iterate through the source document
-            foreach (var sourceValue in xDocSource.Element(rootElement).Elements(dataElement))
+            using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
             {
-                //  Get the data attribute.
-                var dataAttributeValue = sourceValue.Attribute(dataNameAttribute).Value;
-                if (String.IsNullOrWhiteSpace(dataAttributeValue))
-                    continue;
-
-                var englishValue = sourceValue.Element(valueElement).Value;
-
-                //  Translate the value
-                var translatedValue = translateHelper.TranslateWordOrPhrase(englishValue);
-
-                var targetValue = xDocTarget.Element(rootElement).Elements(dataElement)
-                    .FirstOrDefault(se => se.Attribute(dataNameAttribute).Value.Trim().ToLower() == dataAttributeValue.Trim().ToLower());
-                if (targetValue != null)
+                foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
                 {
-                    var existingTargetValue = targetValue.Element(valueElement).Value;
-
-                    if (existingTargetValue != translatedValue)
+                    var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
+                    var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
+                    if (String.IsNullOrWhiteSpace(existingTargetValue) == false)
                     {
-                        //  Translation already exists overwrite?
-                        MessageBoxResult answer = MessageBox.Show(this, "A translation already exists in the target file\n\n" +
-                                                           String.Format("Existing Value\t: {0}\nNew Value\t: {1}\n\n", existingTargetValue, translatedValue) +
-                                                           "Do you want to overwrite this value?", "Overwrite?",
-                                                     MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
-                        switch (answer)
+                        if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase) == false)
                         {
-                            case MessageBoxResult.Yes:
-                                targetValue.Element(valueElement).Value = translatedValue;
-                                dirtyFile = true;
-                                break;
-                            case MessageBoxResult.Cancel:
-                                MessageBox.Show("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information);
-                                return;
+                            MessageBoxResult answer = MessageBox.Show(this, "A translation already exists in the target file\n\n" +
+                                                               String.Format("Existing Value\t: {0}\nNew Value\t: {1}\n\n", existingTargetValue, translatedValue) +
+                                                               "Do you want to overwrite this value?", "Overwrite?",
+                                                         MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+                            switch (answer)
+                            {
+                                case MessageBoxResult.Yes:
+                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                                    break;
+                                case MessageBoxResult.Cancel:
+                                    MessageBox.Show("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information);
+                                    return;
+                            }
                         }
                     }
                     else
-                        continue;
-                }
-                else
-                {
-                    xDocTarget.Element(rootElement).Add(new XElement(dataElement,
-                                                                     new XAttribute(dataNameAttribute, dataAttributeValue),
-                                                                     new XAttribute(XNamespace.Xml + "space", "preserve"),
-                                                                     new XElement(valueElement, translatedValue)));
-                    dirtyFile = true;
-                }
+                        resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, false);
 
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    TranslatedItems.Add(
-                        String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", dataAttributeValue, englishValue,
-                                      translatedValue));
-                    lstStatus.Items.Refresh();
-                }));
+                    Dispatcher.BeginInvoke(new Action(() =>
+                                                {
+                                                    TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                                                                    sourcePair.Key, sourcePair.Value, translatedValue));
+                                                }));
+                }
             }
-
-            if (dirtyFile)
-                xDocTarget.Save(TargetFile);
 
             MessageBox.Show("The translation has successfully be done from Google.  Please check the output window for a list of items that have been translated.", "Success",
                                                 MessageBoxButton.OK, MessageBoxImage.Information);

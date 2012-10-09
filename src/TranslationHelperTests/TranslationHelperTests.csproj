@@ -75,7 +75,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\TranslationHelper.csproj">
+    <ProjectReference Include="..\TranslationHelper\TranslationHelper.csproj">
       <Project>{8009d60d-578c-44b1-9d36-89777b93233f}</Project>
       <Name>TranslationHelper</Name>
     </ProjectReference>

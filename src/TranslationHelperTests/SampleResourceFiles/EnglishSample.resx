@@ -117,7 +117,19 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="KeyInTarget" xml:space="preserve">
+    <value>Value Found In Target File</value>
+  </data>
+  <data name="MultipleMatchOne" xml:space="preserve">
+    <value>Multiple Keys Matching.</value>
+  </data>
+  <data name="MultipleMatchThree" xml:space="preserve">
+    <value>Multiple Keys Matching.</value>
+  </data>
+  <data name="MultipleMatchTwo" xml:space="preserve">
+    <value>Multiple Keys Matching.</value>
+  </data>
   <data name="SingleValue" xml:space="preserve">
-    <value>Only a single value should be found.</value>
+    <value>Only a single key should be found.</value>
   </data>
 </root>

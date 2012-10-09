@@ -22,14 +22,14 @@ namespace TranslationHelperTests.SampleResourceFiles {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class TargetTemplate {
+    internal class EnglishSample {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal TargetTemplate() {
+        internal EnglishSample() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace TranslationHelperTests.SampleResourceFiles {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TranslationHelperTests.SampleResourceFiles.TargetTemplate", typeof(TargetTemplate).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TranslationHelperTests.SampleResourceFiles.EnglishSample", typeof(EnglishSample).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -57,6 +57,51 @@ namespace TranslationHelperTests.SampleResourceFiles {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value Found In Target File.
+        /// </summary>
+        internal static string KeyInTarget {
+            get {
+                return ResourceManager.GetString("KeyInTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Multiple Keys Matching..
+        /// </summary>
+        internal static string MultipleMatchOne {
+            get {
+                return ResourceManager.GetString("MultipleMatchOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Multiple Keys Matching..
+        /// </summary>
+        internal static string MultipleMatchThree {
+            get {
+                return ResourceManager.GetString("MultipleMatchThree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Multiple Keys Matching..
+        /// </summary>
+        internal static string MultipleMatchTwo {
+            get {
+                return ResourceManager.GetString("MultipleMatchTwo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only a single key should be found..
+        /// </summary>
+        internal static string SingleValue {
+            get {
+                return ResourceManager.GetString("SingleValue", resourceCulture);
             }
         }
     }

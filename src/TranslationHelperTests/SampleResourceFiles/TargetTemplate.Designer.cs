@@ -22,14 +22,14 @@ namespace TranslationHelperTests.SampleResourceFiles {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class EnglishSample {
+    internal class TargetTemplate {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal EnglishSample() {
+        internal TargetTemplate() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace TranslationHelperTests.SampleResourceFiles {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TranslationHelperTests.SampleResourceFiles.EnglishSample", typeof(EnglishSample).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TranslationHelperTests.SampleResourceFiles.TargetTemplate", typeof(TargetTemplate).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,11 +61,11 @@ namespace TranslationHelperTests.SampleResourceFiles {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Only a single value should be found..
+        ///   Looks up a localized string similar to Value Found In Target File.
         /// </summary>
-        internal static string SingleValue {
+        internal static string KeyInTarget {
             get {
-                return ResourceManager.GetString("SingleValue", resourceCulture);
+                return ResourceManager.GetString("KeyInTarget", resourceCulture);
             }
         }
     }
