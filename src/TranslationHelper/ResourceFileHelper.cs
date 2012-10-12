@@ -72,8 +72,6 @@ namespace TranslationHelper
                     return;
                         
             targetValue.Element(VALUE_ELEMENT).Value = value;
-
-            _xDocTarget.Element(ROOT_ELEMENT).Add(targetValue);
         }
 
         public void SaveChangeToTarget()
@@ -119,10 +117,13 @@ namespace TranslationHelper
             var matchingElement = rootElement.Elements(DATA_ELEMENT)
                                              .SingleOrDefault(e => e.Attribute(DATA_NAME_ATTRIBUTE).Value.ToLower() == key.ToLower());
             if (matchingElement == null)
+            {
                 matchingElement = new XElement(DATA_ELEMENT,
                                     new XAttribute(DATA_NAME_ATTRIBUTE, key),
                                     new XAttribute(XNamespace.Xml + "space", "preserve"),
                                     new XElement(VALUE_ELEMENT, String.Empty));
+                rootElement.Add(matchingElement);
+            }
 
             return matchingElement;
         }

@@ -24,6 +24,8 @@ namespace TranslationHelper
 
         private ObservableCollection<String> translatedItems;
 
+        private const string TRANSLATION_TO_SKIP = "(please inactivate)";
+
         #endregion
 
         #region Properties
@@ -128,104 +130,71 @@ namespace TranslationHelper
             const int offset = 4;
             const int englishColumn = 1;
             const int translatedValueColumn = 2;
-            const string translationToSkip = "(please inactivate)";
-
+            
             var excelApp = new Microsoft.Office.Interop.Excel.Application();
+            MessageBoxResult writeToAllKeysAnswer;
 
             try
             {
-                var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile);
-
-                var xDocSource = XDocument.Load(this.SourceFile);
-                var xDocTarget = XDocument.Load(this.TargetFile);
                 var excelWb = excelApp.Workbooks.Open(this.TranslationFile, false, true);
                 var workSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelWb.Worksheets[1];
                 var range = workSheet.UsedRange;
-                var dirtyFile = false;
-
-                for (int rowIndex = offset; rowIndex <= range.Rows.Count; rowIndex++)
-                {
-                    var englishValue = (range.Cells.Value2[rowIndex, englishColumn] ?? String.Empty).ToString().Trim().ToLower();
-                    var translatedValue = (range.Cells.Value2[rowIndex, translatedValueColumn] ?? String.Empty).ToString().Trim();
-
-                    //  Inspect the translation data from the Excel spread sheet
-                    if (String.IsNullOrWhiteSpace(englishValue) || String.IsNullOrWhiteSpace(translatedValue) || translatedValue.ToLower() == translationToSkip)
-                        continue;
-
-                    var sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
-                    if (sourceValues.Any() == false) continue;
-                    //  TODO: Fix this so that you throw up a question/warning that you have multiple keys for the same value
-                    //        in many cases this is due to repeated text in a resource file value 
-                    KeyValuePair<string, string> sourceValue = sourceValues.First();
-                    var dataAttributeValue = sourceValue.Value;
-                    
-                    ////  Get the data attribute.
-                    //var dataAttributeValue = sourceValue.Attribute(dataNameAttribute).Value;
-                    //if (String.IsNullOrWhiteSpace(dataAttributeValue))
-                    //    continue;
-
-                    var targetValues = resourceFileHelper.GetNameValuesFromTargetUsingValue(sourceValue.Key);
-                    //  TODO: Fix this so that you throw up a question/warning that you have multiple keys for the same value
-                    //        in many cases this is due to repeated text in a resource file value 
-                    if (targetValues.Any())
-                    {
-                        var targetValue = targetValues.First();
-                        //var existingTargetValue = targetValue.Element(valueElement).Value;
-                        var existingTargetValue = targetValue.Value;
-
-                        if (existingTargetValue != translatedValue)
-                        {
-                            //  Translation already exists overwrite?
-                            MessageBoxResult answer = MessageBox.Show(this, "A translation already exists in the target file\n\n" +
-                                                                            String.Format("Existing Value\t: {0}\nNew Value\t: {1}\n\n", existingTargetValue, translatedValue) +
-                                                                            "Do you want to overwrite this value?", "Overwrite?",
-                                                                      MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
-                            switch (answer)
-                            {
-                                case MessageBoxResult.Yes:
-                                    //  TODO: Write this back
-                                    //targetValue.Element(valueElement).Value = translatedValue;
-                                    dirtyFile = true;
-                                    break;
-                                case MessageBoxResult.Cancel:
-                                    MessageBox.Show("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information);
-                                    return;
-                            }
-                        }
-                        else
-                            continue;
-                    }
-                    else
-                    {
-                        //xDocTarget.Element(rootElement).Add(new XElement(dataElement,
-                        //                                                 new XAttribute(dataNameAttribute, dataAttributeValue),
-                        //                                                 new XAttribute(XNamespace.Xml + "space", "preserve"),
-                        //                                                 new XElement(valueElement, translatedValue)));
-                        dirtyFile = true;
-                    }
-
-                    Dispatcher.BeginInvoke(new Action(() =>
-                                                          {
-                                                              TranslatedItems.Add(
-                                                                  String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", dataAttributeValue, englishValue,
-                                                                                translatedValue));
-                                                              lstStatus.Items.Refresh();
-                                                          }));
-                }
                 
-                excelWb.Close(false, Type.Missing, Type.Missing);
-                excelApp.Workbooks.Close();
-                Marshal.ReleaseComObject(range);
-                Marshal.ReleaseComObject(excelWb);
-                range = null;
-                workSheet = null; 
-                excelWb = null;
+                using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
+                {
+                    for (int rowIndex = offset; rowIndex <= range.Rows.Count; rowIndex++)
+                    {
+                        var englishValue = (range.Cells.Value2[rowIndex, englishColumn] ?? String.Empty).ToString().Trim().ToLower();
+                        var translatedValue = (range.Cells.Value2[rowIndex, translatedValueColumn] ?? String.Empty).ToString().Trim();
 
-                if (dirtyFile)
-                    xDocTarget.Save(TargetFile);
+                        //  Inspect the translation data from the Excel spread sheet
+                        if (String.IsNullOrWhiteSpace(englishValue) || String.IsNullOrWhiteSpace(translatedValue) || translatedValue.ToLower() == TRANSLATION_TO_SKIP)
+                            continue;
 
-                MessageBox.Show("The translation has successfully be parsed.  Please check the output window for a list of items that have been translated.", "Success",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                        Dictionary<string, string> sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
+                        if (sourceValues.Any() == false) continue;
+
+                        writeToAllKeysAnswer = MessageBoxResult.No;
+                        if (sourceValues.Count() > 1)
+                            writeToAllKeysAnswer = MessageBox.Show(this, String.Format("The value \"{0}\" exists for multiple keys.\n\n", englishValue) +
+                                                               String.Join("\n", sourceValues.Select(v => String.Format("\tKey:{0} => Value:{1}", v.Key, v.Value))) + "\n\n" +
+                                                               String.Format("Use translation \"{0}\" for all keys?", translatedValue), "Use Translation For All?",
+                                                         MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes);
+
+                        if (writeToAllKeysAnswer == MessageBoxResult.Cancel)
+                            break;
+
+                        foreach (var sourcePair in sourceValues)
+                        {
+                            if (writeToAllKeysAnswer == MessageBoxResult.No)
+                            {
+                                var overwriteDifferentAnswer = GetDifferentTranslationOverwriteAnswer(resourceFileHelper, sourcePair.Key, translatedValue);
+                                if (overwriteDifferentAnswer == MessageBoxResult.Cancel)
+                                    break;
+                            
+                                resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue,
+                                                                              (overwriteDifferentAnswer == MessageBoxResult.Yes));
+                            }
+                            else
+                                resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+
+                            TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                               sourcePair.Key, sourcePair.Value, translatedValue));
+                            OnPropertyChanged("TranslatedItems");
+                        }
+                    }
+
+                    excelWb.Close(false, Type.Missing, Type.Missing);
+                    excelApp.Workbooks.Close();
+                    Marshal.ReleaseComObject(range);
+                    Marshal.ReleaseComObject(excelWb);
+                    range = null;
+                    workSheet = null;
+                    excelWb = null;
+
+                    MessageBox.Show("The translation has successfully be parsed.  Please check the output window for a list of items that have been translated.", "Success",
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {
@@ -240,6 +209,26 @@ namespace TranslationHelper
                 Marshal.FinalReleaseComObject(excelApp);
                 excelApp = null;
             }
+        }
+
+        private MessageBoxResult GetDifferentTranslationOverwriteAnswer(ResourceFileHelper resourceFileHelper, string resourceKey, string translatedValue)
+        {
+            MessageBoxResult answer = MessageBoxResult.Yes;
+
+            var targetValue = resourceFileHelper.GetValueFromTargetUsingKey(resourceKey);
+            if (String.IsNullOrWhiteSpace(targetValue) == false)
+            {
+                if (targetValue != translatedValue)
+                {
+                    //  Different Translation already exists overwrite?
+                    answer = MessageBox.Show(this, "A different translation already exists in the target file\n\n" +
+                                                    String.Format("Existing Value\t: {0}\nNew Value\t: {1}\n\n", targetValue, translatedValue) +
+                                                    "Do you want to overwrite this value?", "Overwrite?",
+                                                MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+                }
+            }            
+
+            return answer;
         }
 
         private void ParseFromGoogle()
@@ -277,11 +266,9 @@ namespace TranslationHelper
                     else
                         resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, false);
 
-                    Dispatcher.BeginInvoke(new Action(() =>
-                                                {
-                                                    TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                                    sourcePair.Key, sourcePair.Value, translatedValue));
-                                                }));
+                    TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                      sourcePair.Key, sourcePair.Value, translatedValue));
+                    OnPropertyChanged("TranslatedItems");                                                
                 }
             }
 

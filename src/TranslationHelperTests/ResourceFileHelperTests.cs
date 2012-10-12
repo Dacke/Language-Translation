@@ -77,6 +77,23 @@ namespace TranslationHelperTests
         }
 
         [Then]
+        public void WhenWritingValuesToTargetWithoutOverwrite()
+        {
+            const string key = "WhenWritingValuesToTargetWithoutOverwrite_TestKey";
+            const string goodValue = "This value is a test value for test WhenWritingValuesToTargetWithoutOverwrite";
+            const string badValue = "This value is a bad test value for test WhenWritingValuesToTargetWithoutOverwrite";
+
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget(key, goodValue, true));
+            Assert.DoesNotThrow(() => sut.SaveChangeToTarget());
+            Assert.That(sut.GetValueFromTargetUsingKey(key), Is.EqualTo(goodValue));
+
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget(key, badValue, false));
+            Assert.DoesNotThrow(() => sut.SaveChangeToTarget());
+
+            Assert.That(sut.GetValueFromTargetUsingKey(key), Is.Not.EqualTo(badValue));
+        }
+
+        [Then]
         public void WhenValidatingValuesWrittenToTarget()
         {
             const string key = "WhenValidatingValuesWrittenToTarget_TestKey";
@@ -86,12 +103,38 @@ namespace TranslationHelperTests
             Assert.DoesNotThrow(() => sut.SaveChangeToTarget());
             Assert.That(sut.GetValueFromTargetUsingKey(key), Is.EqualTo(value));
         }
-
+        
         [Then]
         public void WhenSavingChangesToTarget()
         {
             Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget("New_Key", "New value that was not found in the target before.", false));
             Assert.DoesNotThrow(() => sut.SaveChangeToTarget());
+        }
+
+        [Then]
+        public void WhenOverwritingExistingValuesToTarget()
+        {
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget("Key1", "Key1Value", false));
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget("Key2", "Key2Value", false));
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget("Key3", "Key3Value", false));
+            Assert.DoesNotThrow(() => sut.WriteNameValuePairToTarget("Key4", "Key4Value", false));
+            Assert.DoesNotThrow(() => sut.SaveChangeToTarget());
+
+            using (var rfhOne = new ResourceFileHelper(_sourceFilePath, _targetFilePath))
+            {
+                Assert.That(rfhOne.GetNameValuesFromTargetUsingValue("Key1Value").Count, Is.EqualTo(1));
+                Assert.That(rfhOne.GetNameValuesFromTargetUsingValue("Key2Value").Count, Is.EqualTo(1));
+                Assert.That(rfhOne.GetNameValuesFromTargetUsingValue("Key3Value").Count, Is.EqualTo(1));
+                Assert.That(rfhOne.GetNameValuesFromTargetUsingValue("Key4Value").Count, Is.EqualTo(1));
+
+                Assert.DoesNotThrow(() => rfhOne.WriteNameValuePairToTarget("Key1", "NewKey1Value", true));
+                Assert.DoesNotThrow(() => rfhOne.SaveChangeToTarget());
+            }
+
+            using (var rfhTwo = new ResourceFileHelper(_sourceFilePath, _targetFilePath))
+            {
+                Assert.That(rfhTwo.GetNameValuesFromTargetUsingValue("NewKey1Value").Count, Is.EqualTo(1));
+            }
         }
 
         [Then]

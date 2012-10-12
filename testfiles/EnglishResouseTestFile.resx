@@ -201,6 +201,9 @@
   <data name="Department" xml:space="preserve">
     <value>Department</value>
   </data>
+  <data name="DepartmentName" xml:space="preserve">
+      <value>Department</value>
+  </data>
   <data name="Departments" xml:space="preserve">
     <value>Departments</value>
   </data>
