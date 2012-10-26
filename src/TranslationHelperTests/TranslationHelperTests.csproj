@@ -38,7 +38,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nunit.framework">
-      <HintPath>..\src\packages\NUnit.2.6.1\lib\nunit.framework.dll</HintPath>
+      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
@@ -72,15 +72,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\TranslationHelper\TranslationHelper.csproj">
       <Project>{8009d60d-578c-44b1-9d36-89777b93233f}</Project>
       <Name>TranslationHelper</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="SampleResourceFiles\EnglishSample.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>EnglishSample.Designer.cs</LastGenOutput>

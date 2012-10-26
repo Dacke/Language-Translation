@@ -6,10 +6,8 @@ using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Microsoft.Win32;
 using System.ComponentModel;
-using System.Xml.Linq;
 using Remotion.Data.Linq.Collections;
 
 
@@ -178,7 +176,7 @@ namespace TranslationHelper
                             else
                                 resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
 
-                            TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                            UpdateTranslatedItems(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
                                                                sourcePair.Key, sourcePair.Value, translatedValue));
                             OnPropertyChanged("TranslatedItems");
                         }
@@ -266,7 +264,7 @@ namespace TranslationHelper
                     else
                         resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, false);
 
-                    TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                    UpdateTranslatedItems(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
                                                       sourcePair.Key, sourcePair.Value, translatedValue));
                     OnPropertyChanged("TranslatedItems");                                                
                 }
@@ -274,6 +272,11 @@ namespace TranslationHelper
 
             MessageBox.Show("The translation has successfully be done from Google.  Please check the output window for a list of items that have been translated.", "Success",
                                                 MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void UpdateTranslatedItems(string item)
+        {
+            Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(item)));
         }
 
         #region Event Handlers
