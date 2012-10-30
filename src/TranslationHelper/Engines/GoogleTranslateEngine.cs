@@ -1,28 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Web;
+using System.Web.Script.Serialization;
 
-namespace TranslationHelper
+namespace TranslationHelper.Engines
 {
     //  TODO: Currently the code provided does not allow for full Unicode translations such as Chinese characters, etc.
-    class GoogleTranslateHelper
+    public class GoogleTranslateEngine
     {
         private const string englishCulture = "en";
-        private const string googleDefaultUrlFormat = "http://translate.google.com/?sl={0}&tl={1}&js=n&prev=_t&hl=en&layout=2&eotf=1&text={2}";
+        //                                             http://translate.google.com/translate_a/t?client=webapp&sl=en&tl=ja&hl=en&q=Hold%20back%20the%20rain&sc=1
+        private const string googleDefaultUrlFormat = "http://translate.google.com/translate_a/t?client=webapp&sl={0}&tl={1}&hl=en&q={2}&sc=1";
+
+        private WebClient webClient;
+        private JavaScriptSerializer javaScriptSerializer;
 
         public string FromCulture { get; set; }
         public string ToCulture { get; set; }
         public string GoogleTranslateUrl { get; set; }
 
-        public GoogleTranslateHelper()
+        public GoogleTranslateEngine() : this(new WebClient()) { }
+        
+        public GoogleTranslateEngine(WebClient webClient)
         {
             FromCulture = englishCulture;
             ToCulture = englishCulture;
             GoogleTranslateUrl = googleDefaultUrlFormat;
+            
+            javaScriptSerializer = new JavaScriptSerializer();
         }
 
         public string TranslateWordOrPhrase(string wordOrPhraseToTranslate)
@@ -33,14 +41,27 @@ namespace TranslationHelper
             {
                 var url = String.Format(GoogleTranslateUrl, FromCulture, ToCulture, HttpUtility.UrlEncode(wordOrPhraseToTranslate));
 
-                var webClient = new WebClient()
+                var webReq = WebRequest.Create(url) as HttpWebRequest;
+                if (webReq == null)
+                    throw new Exception("Unable to create a web request from the given url");
+
+                webReq.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+                webReq.UserAgent = "Opera/12.02 (Android 4.1; Linux; Opera Mobi/ADR-1111101157; U; en-US) Presto/2.9.201 Version/12.02";
+                webReq.Referer = "http://translate.google.com/m/translate";
+
+                var webResponse = webReq.GetResponse();
+                using (var responseStream = webResponse.GetResponseStream())
                 {
-                    Encoding = System.Text.Encoding.Default
-                };
+                    if (responseStream == null)
+                        throw new Exception("No response stream found for the given url");
 
-                var page = webClient.DownloadString(url);
-
-                translatedValue = GetTranslatedValueFromWebPageData(page, wordOrPhraseToTranslate);
+                    var streamReader = new StreamReader(responseStream, System.Text.Encoding.UTF8);
+                    var responseData = streamReader.ReadToEnd();
+                    
+                    translatedValue = responseData.StartsWith("<!DOCTYPE html>")
+                                            ? GetTranslatedValueFromWebPageData(responseData, wordOrPhraseToTranslate)
+                                            : GetTranslatedValueFromJson(responseData);
+                }
             }
             catch (Exception ex)
             {
@@ -52,7 +73,14 @@ namespace TranslationHelper
 
             return translatedValue;
         }
-        
+
+        private string GetTranslatedValueFromJson(string page)
+        {
+            var json = javaScriptSerializer.Deserialize<GoogleTranslationResult>(page);
+
+            return json.sentences.First().trans;
+        }
+
         private static string GetTranslatedValueFromWebPageData(string page, string value)
         {
             var resultBoxData = GetSpanValue(page, "result_box");

@@ -36,7 +36,7 @@ namespace TranslationHelper
         public void Dispose()
         {
             try { _xDocTarget.Save(TargetResourceFile); } 
-            catch (Exception) { }
+            catch (Exception ex) { throw ex; }
         }
         
         public Dictionary<String, String> GetNameValuesFromSource(string value)

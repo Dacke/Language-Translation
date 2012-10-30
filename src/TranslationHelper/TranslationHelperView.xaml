@@ -1,0 +1,71 @@
+﻿<Window x:Class="TranslationHelper.TranslationHelperView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Language Translation Utility"
+        Height="506" Width="876" 
+        Icon="/TranslationHelper;component/Select-Language-32x32.ico">
+
+    <Window.Resources>
+        <Style x:Key="ButtonTemplate" TargetType="Button">
+            <Setter Property="Margin" Value="5,3,5,3" />
+            <Setter Property="Button.Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="5" RenderingBias="Performance" ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="150" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="32" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="32" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="32" />
+            <RowDefinition Height="60" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Label Content="{Binding EnglishResourceFileLabel}" 
+               Grid.Row="0" Grid.Column="0" />
+        <TextBox x:Name="txtSourceFile" Text="{Binding Path=SourceFile, Mode=TwoWay}" Grid.Row="1" Grid.Column="0" Margin="5,3,5,3" />
+        <Button x:Name="cmdSourceBrowse" Content="{Binding BrowseLabel}" 
+                Grid.Row="1" Grid.Column="1" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseSourceFileCommand}" />
+        <Label Content="{Binding TargetResourceFileLabel}" Grid.Row="2" Grid.Column="0"  />
+        <TextBox x:Name="txtTargetFile" Text="{Binding Path=TargetFile, Mode=TwoWay}" Grid.Row="3" Grid.Column="0" Margin="5,3,5,3" />
+        <Button x:Name="cmdTargetBrowse" Content="{Binding BrowseLabel}"
+                Grid.Row="3" Grid.Column="1" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseTargetFileCommand}" />
+        <Grid Grid.Row="4" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
+            <CheckBox x:Name="chkTranslateFromGoogle" Content="{Binding UseGoogleLabel}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Margin="3" 
+                      IsChecked="{Binding UseGoogleTranslationEngine}" Command="{Binding TranslateFromGoogleCommand }" >
+                <CheckBox.CommandParameter>
+                    <Binding Path="IsChecked" ElementName="chkTranslateFromGoogle" />
+                </CheckBox.CommandParameter>
+            </CheckBox>
+            <ComboBox x:Name="comboLanguageCode" ItemsSource="{Binding Path=LanguageCodes, Mode=OneWay}" DisplayMemberPath="Name" SelectedIndex="1" 
+                      Margin="3" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" 
+                      IsEnabled="{Binding UseGoogleTranslationEngine, Mode=OneWay}" SelectedValue="{Binding SelectedLanguageCode, Mode=TwoWay}"  />
+        </Grid>
+        <Label Content="{Binding TranslationsFileLabel}" Grid.Row="5" Grid.Column="0" />
+        <TextBox x:Name="txtTranslationsFile" Text="{Binding Path=TranslationFile, Mode=TwoWay}" IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}"
+                 Grid.Row="6" Grid.Column="0" Margin="5,3,5,3" />
+        <Button x:Name="cmdTranslationsBrowse" Content="{Binding BrowseLabel}" Grid.Row="6" Grid.Column="1" Style="{StaticResource ButtonTemplate}"
+                IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}" Command="{Binding BrowseTranslationFileCommand, Mode=OneWay}" />
+        <Label x:Name="lblOutput" Content="{Binding OutputLabel}" 
+                Grid.Row="7" Grid.Column="0" Margin="5,3,5,3" VerticalAlignment="Bottom" />
+        <Button x:Name="cmdTranslate" Content="{Binding TranslateLabel}" Grid.Row="7" Grid.Column="1" Style="{StaticResource ButtonTemplate}" 
+                Command="{Binding TranslateCommand}"/>
+        <ListBox Name="lstStatus" Margin="5,8,5,3" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" 
+                 Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" />
+    </Grid>
+</Window>
