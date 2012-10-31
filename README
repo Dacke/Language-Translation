@@ -23,7 +23,3 @@ Run the application again, this time browse for your translations file and click
 The application should prompt you before overwriting any translations that already exist in the file that do not match the translated value.
 
 Please if you have any improvements, fork this project and then submit a pull request.  This is version 1.0 of the software and may not provide all of the needed functionality.
-
-Known Issues
--------------------------------------------------------------------------------
-This project does not do full Unicode translations to things like Chinese or Russian, etc.

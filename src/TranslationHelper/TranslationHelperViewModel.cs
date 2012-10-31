@@ -201,16 +201,17 @@ namespace TranslationHelper
                 Task.Factory.StartNew(() =>
                    {
                        View.SetApplicationCursor(Cursors.Wait);
-
-                       View.AddOutputString(String.Format("Translation Started at {0}", DateTime.Now.ToLongTimeString()));
+                       View.AddOutputString("Translation Started");
+                       var stopWatch = new Stopwatch();
+                       stopWatch.Start();
 
                        if (UseGoogleTranslationEngine)
                            this.ParseFromGoogle();
                        else
                            this.ParseTranslationFile();
 
-                       View.AddOutputString("Translation Completed");
-
+                       stopWatch.Stop();
+                       View.AddOutputString(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds));
                        View.SetApplicationCursor(Cursors.Arrow);
 
                        MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
@@ -247,17 +248,71 @@ namespace TranslationHelper
             var result = new ObservableCollection<LanguageCode>();
 
             result.Add(new LanguageCode() { Code = "af", Name = "Afrikaans" });
-            result.Add(new LanguageCode() { Code = "sq", Name = "Albanian" }); 
+            result.Add(new LanguageCode() { Code = "sq", Name = "Albanian" });
+            result.Add(new LanguageCode() { Code = "ar", Name = "Arabic" });
+            result.Add(new LanguageCode() { Code = "hy", Name = "Armenian" });
+            result.Add(new LanguageCode() { Code = "az", Name = "Azerbaijani" });
             result.Add(new LanguageCode() { Code = "eu", Name = "Basque" });
+            result.Add(new LanguageCode() { Code = "be", Name = "Belarusian" });
+            result.Add(new LanguageCode() { Code = "bn", Name = "Bengali" });
+            result.Add(new LanguageCode() { Code = "bg", Name = "Bulgarian" });
+            result.Add(new LanguageCode() { Code = "ca", Name = "Catalan" });
+            result.Add(new LanguageCode() { Code = "zh-CN", Name = "Chinese (Simplified)" });
+            result.Add(new LanguageCode() { Code = "zh-TW", Name = "Chinese (Traditional)" });
+            result.Add(new LanguageCode() { Code = "hr", Name = "Croatian" });
+            result.Add(new LanguageCode() { Code = "cs", Name = "Czech" });
+            result.Add(new LanguageCode() { Code = "da", Name = "Danish" });
             result.Add(new LanguageCode() { Code = "nl", Name = "Dutch" });
+            result.Add(new LanguageCode() { Code = "en", Name = "English" });
+            result.Add(new LanguageCode() { Code = "eo", Name = "Esperanto" });
+            result.Add(new LanguageCode() { Code = "et", Name = "Estonian" });
+            result.Add(new LanguageCode() { Code = "tl", Name = "Filipino" });
+            result.Add(new LanguageCode() { Code = "fi", Name = "Finnish" });
             result.Add(new LanguageCode() { Code = "fr", Name = "French" });
+            result.Add(new LanguageCode() { Code = "gl", Name = "Galician" });
+            result.Add(new LanguageCode() { Code = "ka", Name = "Georgian" });
             result.Add(new LanguageCode() { Code = "de", Name = "German" });
+            result.Add(new LanguageCode() { Code = "el", Name = "Greek" });
+            result.Add(new LanguageCode() { Code = "gu", Name = "Gujarati" });
+            result.Add(new LanguageCode() { Code = "ht", Name = "Haitian Creole" });
+            result.Add(new LanguageCode() { Code = "iw", Name = "Hebrew" });
+            result.Add(new LanguageCode() { Code = "hi", Name = "Hindi" });
+            result.Add(new LanguageCode() { Code = "hu", Name = "Hungarian" });
+            result.Add(new LanguageCode() { Code = "is", Name = "Icelandic" });
+            result.Add(new LanguageCode() { Code = "id", Name = "Indonesian" });
+            result.Add(new LanguageCode() { Code = "ga", Name = "Irish" });
             result.Add(new LanguageCode() { Code = "it", Name = "Italian" });
+            result.Add(new LanguageCode() { Code = "ja", Name = "Japanese" });
+            result.Add(new LanguageCode() { Code = "kn", Name = "Kannada" });
+            result.Add(new LanguageCode() { Code = "ko", Name = "Korean" });
+            result.Add(new LanguageCode() { Code = "lo", Name = "Lao" });
             result.Add(new LanguageCode() { Code = "la", Name = "Latin" });
+            result.Add(new LanguageCode() { Code = "lv", Name = "Latvian" });
+            result.Add(new LanguageCode() { Code = "lt", Name = "Lithuanian" });
+            result.Add(new LanguageCode() { Code = "mk", Name = "Macedonian" });
+            result.Add(new LanguageCode() { Code = "ms", Name = "Malay" });
+            result.Add(new LanguageCode() { Code = "mt", Name = "Maltese" });
             result.Add(new LanguageCode() { Code = "no", Name = "Norwegian" });
-            result.Add(new LanguageCode() { Code = "pl", Name = "Polish" }); 
+            result.Add(new LanguageCode() { Code = "fa", Name = "Persian" });
+            result.Add(new LanguageCode() { Code = "pl", Name = "Polish" });
+            result.Add(new LanguageCode() { Code = "pt", Name = "Portuguese" });
+            result.Add(new LanguageCode() { Code = "ro", Name = "Romanian" });
+            result.Add(new LanguageCode() { Code = "ru", Name = "Russian" });
+            result.Add(new LanguageCode() { Code = "sr", Name = "Serbian" });
+            result.Add(new LanguageCode() { Code = "sk", Name = "Slovak" });
+            result.Add(new LanguageCode() { Code = "sl", Name = "Slovenian" });
+            result.Add(new LanguageCode() { Code = "es", Name = "Spanish" });
+            result.Add(new LanguageCode() { Code = "sw", Name = "Swahili" });
             result.Add(new LanguageCode() { Code = "sv", Name = "Swedish" });
-            result.Add(new LanguageCode() { Code = "es", Name = "Spanish" }); 
+            result.Add(new LanguageCode() { Code = "ta", Name = "Tamil" });
+            result.Add(new LanguageCode() { Code = "te", Name = "Telugu" });
+            result.Add(new LanguageCode() { Code = "th", Name = "Thai" });
+            result.Add(new LanguageCode() { Code = "tr", Name = "Turkish" });
+            result.Add(new LanguageCode() { Code = "uk", Name = "Ukrainian" });
+            result.Add(new LanguageCode() { Code = "ur", Name = "Urdu" });
+            result.Add(new LanguageCode() { Code = "vi", Name = "Vietnamese" });
+            result.Add(new LanguageCode() { Code = "cy", Name = "Welsh" });
+            result.Add(new LanguageCode() { Code = "yi", Name = "Yiddish" });
             
             return result;
         }
