@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using TranslationHelper.Engines;
 
 namespace TranslationHelper
@@ -199,24 +200,24 @@ namespace TranslationHelper
                 TranslatedItems.Clear();
 
                 Task.Factory.StartNew(() =>
-                   {
-                       View.SetApplicationCursor(Cursors.Wait);
-                       View.AddOutputString("Translation Started");
-                       var stopWatch = new Stopwatch();
-                       stopWatch.Start();
+                    {
+                        DispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
+                        DispatchService.Invoke(() => TranslatedItems.Add("Translation Started"));
+                        var stopWatch = new Stopwatch();
+                        stopWatch.Start();
 
-                       if (UseGoogleTranslationEngine)
-                           this.ParseFromGoogle();
-                       else
-                           this.ParseTranslationFile();
+                        if (UseGoogleTranslationEngine)
+                            this.ParseFromGoogle();
+                        else
+                            this.ParseTranslationFile();
 
-                       stopWatch.Stop();
-                       View.AddOutputString(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds));
-                       View.SetApplicationCursor(Cursors.Arrow);
-
-                       MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
-                                    MessageBoxButton.OK, MessageBoxImage.Information);
-                   });
+                        stopWatch.Stop();
+                        DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds))); 
+                        DispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
+                        
+                        MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
+                                     MessageBoxButton.OK, MessageBoxImage.Information);
+                    }, TaskCreationOptions.AttachedToParent);
             }
             catch (Exception ex)
             {
@@ -325,35 +326,64 @@ namespace TranslationHelper
 
                 using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
                 {
+                    var overwriteAll = false;
+                    var cancelOperation = false;
+
                     foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
                     {
                         var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
                         var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
+                        
+
+
+
+
+                        //  TODO: This WHOLE thing is terrible, PLEASE find a way to refactor it.
                         if (String.IsNullOrWhiteSpace(existingTargetValue) == false)
                         {
                             if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase) == false)
                             {
-                                //  TODO: Possible Refactor
-                                var answer = View.DisplayMessageBox("A translation already exists in the target file\n\n" +
-                                                      String.Format("Existing Value\t: {0}\nNew Value\t: {1}\n\n", existingTargetValue, translatedValue) +
-                                                                    "Do you want to overwrite this value?", "Overwrite?",
-                                                                    MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
-                                switch (answer)
-                                {
-                                    case MessageBoxResult.Yes:
-                                        resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                                        break;
-                                    case MessageBoxResult.Cancel:
-                                        MessageBox.Show("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        return;
-                                }
+                                if (overwriteAll)
+                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                                else
+                                    DispatchService.Invoke(() =>
+                                        {
+                                            var vm = new OverwriteWarningViewModel(new OverwriteWarning())
+                                                {
+                                                    Question = "Do you wish to overwrite the existing value with the newly translated one?",
+                                                    Description = "A value already exists in the targeted resource file.",
+                                                    ExistingValue = existingTargetValue,
+                                                    TranslationValue = translatedValue,
+                                                };
+                                            vm.View.ShowDialog();
+                                            switch (vm.Answer)
+                                            {
+                                                case OverwriteResult.Yes:
+                                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                                                    break;
+                                                case OverwriteResult.YesToAll:
+                                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                                                    overwriteAll = true;
+                                                    break;
+                                                case OverwriteResult.Cancel:
+                                                    MessageBox.Show("The translation operation has been aborted.", "Aborted",
+                                                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                                                    cancelOperation = true;
+                                                    break;
+                                            }
+                                        });
                             }
                         }
                         else
                             resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, false);
+                        //  TODO: This WHOLE thing is terrible, PLEASE find a way to refactor it.
 
-                        View.AddOutputString(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                        sourcePair.Key, sourcePair.Value, translatedValue));
+                        if (cancelOperation) break;
+
+
+                        //  TODO: Fix this to truly represent what happened.
+                        DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                                                            sourcePair.Key, sourcePair.Value, translatedValue)));
                     }
                 }
             }
@@ -407,19 +437,19 @@ namespace TranslationHelper
                             if (writeToAllKeysAnswer == MessageBoxResult.No)
                             {
                                 //var overwriteDifferentAnswer = GetDifferentTranslationOverwriteAnswer(resourceFileHelper, sourcePair.Key, translatedValue);
-                                var overwriteDialog = new OverwriteWarning();
-                                overwriteDialog.ShowDialog();
-                                if (overwriteDialog.Answer == MessageBoxResult.Cancel)
+                                var vm = new OverwriteWarningViewModel(new OverwriteWarning());
+                                vm.View.ShowDialog();
+                                if (vm.Answer == OverwriteResult.Cancel)
                                     break;
                             
                                 resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue,
-                                                                              (overwriteDialog.Answer == MessageBoxResult.Yes));
+                                                                              (vm.Answer == OverwriteResult.Yes));
                             }
                             else
                                 resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
 
-                            View.AddOutputString(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                sourcePair.Key, sourcePair.Value, translatedValue));
+                            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                                                                sourcePair.Key, sourcePair.Value, translatedValue))));
                         }
                     }
 

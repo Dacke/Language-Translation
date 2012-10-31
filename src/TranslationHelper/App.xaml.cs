@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Windows;
+﻿using System.Windows;
 
 namespace TranslationHelper
 {
@@ -15,9 +10,9 @@ namespace TranslationHelper
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            var view = new TranslationHelperView();
-            var model = new TranslationHelperViewModel(view);
-            view.Show();
+            
+            var model = new TranslationHelperViewModel(new TranslationHelperView());
+            model.View.Show();
         }
     }
 }

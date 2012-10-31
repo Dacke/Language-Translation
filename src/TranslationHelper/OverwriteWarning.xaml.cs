@@ -1,30 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace TranslationHelper
 {
-    /// <summary>
-    /// Interaction logic for OverwriteWarning.xaml
-    /// </summary>
-    public partial class OverwriteWarning : Window
+    public interface IOverwriteWarning
     {
-        public MessageBoxResult Answer { get; private set; }
+        void SetModel(OverwriteWarningViewModel model);
+        void Show();
+        void Close();
+        bool? ShowDialog();
+    }
+
+    public partial class OverwriteWarning : Window, IOverwriteWarning
+    {
+        public OverwriteWarningViewModel Model { get { return DataContext as OverwriteWarningViewModel; } }
 
         public OverwriteWarning()
         {
             InitializeComponent();
-            Answer = MessageBoxResult.Yes;
+        }
+
+        public void SetModel(OverwriteWarningViewModel model)
+        {
+            DataContext = model;
         }
     }
 }

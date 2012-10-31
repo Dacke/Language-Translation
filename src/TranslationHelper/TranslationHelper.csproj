@@ -75,10 +75,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="DelegateCommand.cs" />
+    <Compile Include="DispatcherService.cs" />
     <Compile Include="Engines\GoogleTranslationResult.cs" />
+    <Compile Include="OverwriteResult.cs" />
     <Compile Include="OverwriteWarning.xaml.cs">
       <DependentUpon>OverwriteWarning.xaml</DependentUpon>
     </Compile>
+    <Compile Include="OverwriteWarningViewModel.cs" />
     <Compile Include="PropertyHelper.cs" />
     <Compile Include="ResourceFileHelper.cs" />
     <Compile Include="TranslationHelperViewModel.cs" />
