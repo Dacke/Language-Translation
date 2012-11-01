@@ -61,7 +61,7 @@ namespace TranslationHelper
             Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var item = Model.TranslatedItems.LastOrDefault();
-                    if (String.IsNullOrWhiteSpace(item) == false)
+                    if (item != null)
                         lstStatus.ScrollIntoView(item);
                 }));
         }

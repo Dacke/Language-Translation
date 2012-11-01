@@ -17,16 +17,16 @@ namespace TranslationHelperTests
         public void output_should_contain_all_expected_translated_values()
         {
             Assert.That(testOutput.Count(), Is.EqualTo(7));
-            Assert.That((testOutput.Count(s => s.Contains("Activo")) > 0), Is.True);
-            Assert.That((testOutput.Count(s => s.Contains("Inactivos")) > 0), Is.True);
-            Assert.That((testOutput.Count(s => s.Contains("Tipo de agente")) > 0), Is.True);
-            Assert.That((testOutput.Count(s => s.Contains("Terminar")) > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.Translation == "Activo") > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.Translation == "Inactivos") > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.Translation == "Tipo de agente") > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.Translation == "Terminar") > 0), Is.True);
         }
 
         [Then]
         public void output_should_include_warning_message_when_missing_source_info()
         {
-            Assert.That((testOutput.Count(s => s.StartsWith("WARNING - No Source Key could be found")) > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.Comment == "WARNING - No Source Key could be found") > 0), Is.True);
         }
     }
     
@@ -56,7 +56,7 @@ namespace TranslationHelperTests
         private IResourceFileHelper resourceFileHelper;
 
         protected ExcelTranslateEngine sut;
-        protected List<string> testOutput;
+        protected List<TranslatedItem> testOutput;
 
         protected override void Given()
         {
@@ -73,12 +73,12 @@ namespace TranslationHelperTests
 
             excelFilePath = (Environment.CurrentDirectory + "\\SampleResourceFiles\\ExcelSample.xlsx");
             
-            testOutput = new List<string>();
+            testOutput = new List<TranslatedItem>();
 
             sut = new ExcelTranslateEngine(dispatchService);
         }
 
-        private void SutOnToolOutput(object sender, OutputEventArgs outputEventArgs) { testOutput.Add(outputEventArgs.Output); }
+        private void SutOnToolOutput(object sender, TranslatedItemEventArgs outputEventArgs) { testOutput.Add(outputEventArgs.Item); }
 
         protected override void When()
         {

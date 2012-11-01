@@ -2,8 +2,8 @@
 
 namespace TranslationHelper.Infos
 {
-    public class OutputEventArgs : EventArgs
+    public class TranslatedItemEventArgs : EventArgs
     {
-        public string Output { get; set; }
+        public TranslatedItem Item { get; set; }
     }
 }

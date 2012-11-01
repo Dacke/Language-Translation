@@ -25,7 +25,8 @@ namespace TranslationHelper
         private bool useGoogleTranslationEngine;
         private bool translationFileEnabled;
         private LanguageCode selectedLanguageCode;
-        private ObservableCollection<string> translatedItems;
+        private ObservableCollection<TranslatedItem> translatedItems;
+
         #endregion
 
         #region Properties
@@ -95,7 +96,7 @@ namespace TranslationHelper
                 OnPropertyChanged(p => p.SelectedLanguageCode);
             }
         }
-        public ObservableCollection<string> TranslatedItems
+        public ObservableCollection<TranslatedItem> TranslatedItems
         {
             get { return translatedItems; }
             set
@@ -105,11 +106,8 @@ namespace TranslationHelper
                     View.ScrollOutput();
             }
         }
-
         public ObservableCollection<LanguageCode> LanguageCodes { get; private set; }
-
         public ITranslationHelperView View { get; set; }
-
         public ICommand BrowseSourceFileCommand { get; set; }
         public ICommand BrowseTargetFileCommand { get; set; }
         public ICommand BrowseTranslationFileCommand { get; set; }
@@ -128,7 +126,7 @@ namespace TranslationHelper
 
         public TranslationHelperViewModel(ITranslationHelperView view)
         {
-            TranslatedItems = new ObservableCollection<string>();
+            TranslatedItems = new ObservableCollection<TranslatedItem>();
             LanguageCodes = FillLanguageCodes();
             UseGoogleTranslationEngine = true;
             SelectedLanguageCode = LanguageCodes.Single(lc => lc.Code == "es");
@@ -144,9 +142,9 @@ namespace TranslationHelper
             TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
-            //SourceFile = @"C:\Users\eDorothy\Desktop\testfiles\EnglishResourceTestFile.resx";
-            //TargetFile = @"C:\Users\eDorothy\Desktop\testfiles\empty.resx";
-            //TranslationFile = @"C:\Users\eDorothy\Desktop\testfiles\ExcelSample.xlsx";
+            SourceFile = @"C:\Users\eDorothy\Desktop\testfiles\EnglishResourceTestFile.resx";
+            TargetFile = @"C:\Users\eDorothy\Desktop\testfiles\empty.resx";
+            TranslationFile = @"C:\Users\eDorothy\Desktop\testfiles\ExcelSample.xlsx";
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
             
             View = view;
@@ -203,7 +201,7 @@ namespace TranslationHelper
                 Task.Factory.StartNew(() =>
                     {
                         dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
-                        dispatchService.Invoke(() => TranslatedItems.Add("Translation Started"));
+                        dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem { Comment = "Translation Started" }));
                         var stopWatch = new Stopwatch();
                         stopWatch.Start();
 
@@ -213,7 +211,8 @@ namespace TranslationHelper
                             ParseTranslationFile();
 
                         stopWatch.Stop();
-                        dispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds)));
+                        dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem 
+                                { Comment = String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds) }));
                         dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
                         
                         MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
@@ -362,9 +361,9 @@ namespace TranslationHelper
             try
             {
                 var excelEngine = new ExcelTranslateEngine(new DispatchService());
-                excelEngine.ToolOutput += delegate(object sender, OutputEventArgs args)
+                excelEngine.ToolOutput += delegate(object sender, TranslatedItemEventArgs args)
                     {
-                        View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(args.Output)));
+                        View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(args.Item)));
                     };
 
                 using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
@@ -382,8 +381,10 @@ namespace TranslationHelper
         private void WriteValueToTargetFileWithOutput(ResourceFileHelper resourceFileHelper, KeyValuePair<string, string> sourceValue, string translatedValue)
         {
             resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                            sourceValue.Key, sourceValue.Value, translatedValue))));
+            //View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+            //                                                                                sourceValue.Key, sourceValue.Value, translatedValue))));
+            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(new TranslatedItem
+                { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, Translation = translatedValue })));
         }
 
         private TargetWriteResponse OverwriteWarningWithResult(string existingTargetValue, string translatedValue)

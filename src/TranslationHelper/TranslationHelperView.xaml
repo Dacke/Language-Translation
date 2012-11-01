@@ -6,14 +6,13 @@
         Icon="/Images\Select-Language-32x32.ico">
 
     <Window.Resources>
-        <Style x:Key="ButtonTemplate" TargetType="Button">
-            <Setter Property="Margin" Value="5,3,5,3" />
-            <Setter Property="Button.Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="5" RenderingBias="Performance" ShadowDepth="2" />
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/List-Columns.xaml" />
+                <ResourceDictionary Source="Styles/List-Grid.xaml" />
+                <ResourceDictionary Source="Styles/ButtonStyle.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="12">
@@ -65,7 +64,7 @@
                 Grid.Row="7" Grid.Column="0" Margin="5,3,5,3" VerticalAlignment="Bottom" />
         <Button x:Name="cmdTranslate" Content="{Binding TranslateLabel}" Grid.Row="7" Grid.Column="1" Style="{StaticResource ButtonTemplate}" 
                 Command="{Binding TranslateCommand}"/>
-        <ListBox Name="lstStatus" Margin="5,8,5,3" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" 
-                 Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" />
+        <ListBox Name="lstStatus" Margin="5,8,5,3" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" DisplayMemberPath="Comment"
+                 Style="{StaticResource List-Grid}" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" />
     </Grid>
 </Window>

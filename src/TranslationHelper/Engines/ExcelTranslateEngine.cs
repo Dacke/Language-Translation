@@ -19,7 +19,7 @@ namespace TranslationHelper.Engines
         private const int ENGLISH_COLUMN = 2;
         private const int TRANSLATED_VALUE_COLUMN = 3;
 
-        public event EventHandler<OutputEventArgs> ToolOutput = delegate { };
+        public event EventHandler<TranslatedItemEventArgs> ToolOutput = delegate { };
 
         public ExcelTranslateEngine(IDispatchService dispatchService)
         {
@@ -44,14 +44,14 @@ namespace TranslationHelper.Engines
                 if (String.IsNullOrWhiteSpace(keyValue) == false)
                 {
                     resourceFileHelper.WriteNameValuePairToTarget(keyValue, translatedValue, true);
-                    ToolOutput.Invoke(this, new OutputEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", keyValue, englishValue, translatedValue) });
+                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", keyValue, englishValue, translatedValue) });
                     continue;
                 }
 
                 Dictionary<String, String> sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
                 if (sourceValues == null || sourceValues.Any() == false)
                 {
-                    ToolOutput.Invoke(this, new OutputEventArgs { Output = String.Format("WARNING - No Source Key could be found for value:'{0}'!  No translation can be made.", englishValue) });
+                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("WARNING - No Source Key could be found for value:'{0}'!  No translation can be made.", englishValue) });
                     continue;
                 }
 
@@ -59,7 +59,7 @@ namespace TranslationHelper.Engines
                 {
                     var uniqueValue = sourceValues.Single();
                     resourceFileHelper.WriteNameValuePairToTarget(uniqueValue.Key, translatedValue, true);
-                    ToolOutput.Invoke(this, new OutputEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", uniqueValue.Key, uniqueValue.Value, translatedValue) });
+                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", uniqueValue.Key, uniqueValue.Value, translatedValue) });
                     continue;
                 }
 
@@ -77,8 +77,8 @@ namespace TranslationHelper.Engines
                             foreach (var sourceValue in sourceValues)
                             {
                                 resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                ToolOutput.Invoke(this, new OutputEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                                     sourceValue.Key, sourceValue.Value, translatedValue) });
+                                //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                //                                                                     sourceValue.Key, sourceValue.Value, translatedValue) });
                             }
                             break;
                         case MessageBoxResult.No:
@@ -94,8 +94,8 @@ namespace TranslationHelper.Engines
                                 if (keyResult == MessageBoxResult.Yes)
                                 {
                                     resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                    ToolOutput.Invoke(this, new OutputEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                                     sourceValue.Key, sourceValue.Value, translatedValue) });
+                                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                    //                                                                 sourceValue.Key, sourceValue.Value, translatedValue) });
                                 }
                             }
                             break;
