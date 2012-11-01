@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace TranslationHelper
+namespace TranslationHelper.Helpers
 {
     public class DelegateCommand : ICommand
     {

@@ -1,4 +1,4 @@
-﻿namespace TranslationHelper
+﻿namespace TranslationHelper.Enums
 {
     public enum OverwriteResult
     {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace TranslationHelper
+namespace TranslationHelper.Helpers
 {
-    public class ResourceFileHelper : IDisposable
+    public class ResourceFileHelper : IDisposable, IResourceFileHelper
     {
         private readonly XDocument _xDocSource;
         private XDocument _xDocTarget;

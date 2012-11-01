@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Language Translation Utility"
         Height="506" Width="876" 
-        Icon="/TranslationHelper;component/Select-Language-32x32.ico">
+        Icon="/Images\Select-Language-32x32.ico">
 
     <Window.Resources>
         <Style x:Key="ButtonTemplate" TargetType="Button">

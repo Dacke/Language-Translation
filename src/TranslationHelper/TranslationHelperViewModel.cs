@@ -5,20 +5,19 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using TranslationHelper.Engines;
+using TranslationHelper.Enums;
+using TranslationHelper.Helpers;
+using TranslationHelper.Infos;
 
 namespace TranslationHelper
 {
     public class TranslationHelperViewModel : INotifyPropertyChanged
     {
         #region Fields
-
-        private const string TRANSLATION_TO_SKIP = "(please inactivate)";
 
         private string sourceFile;
         private string targetFile;
@@ -129,27 +128,28 @@ namespace TranslationHelper
 
         public TranslationHelperViewModel(ITranslationHelperView view)
         {
-            this.TranslatedItems = new ObservableCollection<string>();
-            this.LanguageCodes = FillLanguageCodes();
-            this.UseGoogleTranslationEngine = true;
-            this.SelectedLanguageCode = LanguageCodes.Single(lc => lc.Code == "es");
+            TranslatedItems = new ObservableCollection<string>();
+            LanguageCodes = FillLanguageCodes();
+            UseGoogleTranslationEngine = true;
+            SelectedLanguageCode = LanguageCodes.Single(lc => lc.Code == "es");
 
-            BrowseSourceFileCommand = new DelegateCommand(m => this.OnSourceBrowse());
-            BrowseTargetFileCommand = new DelegateCommand(m => this.OnTargetBrowse());
-            BrowseTranslationFileCommand = new DelegateCommand(m => this.OnTranslationFileBrowse());
-            TranslateFromGoogleCommand = new DelegateCommand(m => this.OnGoogleTranslationClick());
-            TranslateCommand = new DelegateCommand(m => this.OnTranslateCommand());
+            BrowseSourceFileCommand = new DelegateCommand(m => OnSourceBrowse());
+            BrowseTargetFileCommand = new DelegateCommand(m => OnTargetBrowse());
+            BrowseTranslationFileCommand = new DelegateCommand(m => OnTranslationFileBrowse());
+            TranslateFromGoogleCommand = new DelegateCommand(m => OnGoogleTranslationClick());
+            TranslateCommand = new DelegateCommand(m => OnTranslateCommand());
 
             OnGoogleTranslationClick();
 
-            this.TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
+            TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
-            this.SourceFile = @"C:\Users\Dacke\Desktop\testfiles\EnglishResourceTestFile.resx";
-            this.TargetFile = @"C:\Users\Dacke\Desktop\testfiles\empty.resx";
+            //SourceFile = @"C:\Users\eDorothy\Desktop\testfiles\EnglishResourceTestFile.resx";
+            //TargetFile = @"C:\Users\eDorothy\Desktop\testfiles\empty.resx";
+            //TranslationFile = @"C:\Users\eDorothy\Desktop\testfiles\ExcelSample.xlsx";
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
             
-            this.View = view;
+            View = view;
             View.SetModel(this);
         }
 
@@ -195,25 +195,26 @@ namespace TranslationHelper
         {
             try
             {
+                var dispatchService = new DispatchService();
                 ValidateArguments();
 
                 TranslatedItems.Clear();
 
                 Task.Factory.StartNew(() =>
                     {
-                        DispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
-                        DispatchService.Invoke(() => TranslatedItems.Add("Translation Started"));
+                        dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
+                        dispatchService.Invoke(() => TranslatedItems.Add("Translation Started"));
                         var stopWatch = new Stopwatch();
                         stopWatch.Start();
 
                         if (UseGoogleTranslationEngine)
-                            this.ParseFromGoogle();
+                            ParseFromGoogle();
                         else
-                            this.ParseTranslationFile();
+                            ParseTranslationFile();
 
                         stopWatch.Stop();
-                        DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds))); 
-                        DispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
+                        dispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds)));
+                        dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
                         
                         MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
                                      MessageBoxButton.OK, MessageBoxImage.Information);
@@ -230,91 +231,92 @@ namespace TranslationHelper
 
         private void ValidateArguments()
         {
-            if (String.IsNullOrWhiteSpace(this.SourceFile) || this.SourceFile.EndsWith("resx") == false)
+            if (String.IsNullOrWhiteSpace(SourceFile) || SourceFile.EndsWith("resx") == false)
                 throw new Exception("You have not filled in a value for the English String Resource File. (*.resx)");
 
-            if (String.IsNullOrWhiteSpace(this.TargetFile) || this.TargetFile.EndsWith("resx") == false)
+            if (String.IsNullOrWhiteSpace(TargetFile) || TargetFile.EndsWith("resx") == false)
                 throw new Exception("You have not filled in a value for the Target Resource File. (*.resx)");
 
-            if (this.UseGoogleTranslationEngine != true)
+            if (UseGoogleTranslationEngine != true)
             {
-                if (String.IsNullOrWhiteSpace(this.TranslationFile) ||
-                    (this.TranslationFile.EndsWith("xls") == false & this.TranslationFile.EndsWith("xlsx") == false))
+                if (String.IsNullOrWhiteSpace(TranslationFile) ||
+                    (TranslationFile.EndsWith("xls") == false & TranslationFile.EndsWith("xlsx") == false))
                     throw new Exception("You have not filled in a value for the Translations File. (*.xls, *.xlsx)");
             }
         }
 
-        private ObservableCollection<LanguageCode> FillLanguageCodes()
+        private static ObservableCollection<LanguageCode> FillLanguageCodes()
         {
-            var result = new ObservableCollection<LanguageCode>();
+            var result = new ObservableCollection<LanguageCode>
+                {
+                    new LanguageCode {Code = "af", Name = "Afrikaans"},
+                    new LanguageCode {Code = "sq", Name = "Albanian"},
+                    new LanguageCode {Code = "ar", Name = "Arabic"},
+                    new LanguageCode {Code = "hy", Name = "Armenian"},
+                    new LanguageCode {Code = "az", Name = "Azerbaijani"},
+                    new LanguageCode {Code = "eu", Name = "Basque"},
+                    new LanguageCode {Code = "be", Name = "Belarusian"},
+                    new LanguageCode {Code = "bn", Name = "Bengali"},
+                    new LanguageCode {Code = "bg", Name = "Bulgarian"},
+                    new LanguageCode {Code = "ca", Name = "Catalan"},
+                    new LanguageCode {Code = "zh-CN", Name = "Chinese (Simplified)"},
+                    new LanguageCode {Code = "zh-TW", Name = "Chinese (Traditional)"},
+                    new LanguageCode {Code = "hr", Name = "Croatian"},
+                    new LanguageCode {Code = "cs", Name = "Czech"},
+                    new LanguageCode {Code = "da", Name = "Danish"},
+                    new LanguageCode {Code = "nl", Name = "Dutch"},
+                    new LanguageCode {Code = "en", Name = "English"},
+                    new LanguageCode {Code = "eo", Name = "Esperanto"},
+                    new LanguageCode {Code = "et", Name = "Estonian"},
+                    new LanguageCode {Code = "tl", Name = "Filipino"},
+                    new LanguageCode {Code = "fi", Name = "Finnish"},
+                    new LanguageCode {Code = "fr", Name = "French"},
+                    new LanguageCode {Code = "gl", Name = "Galician"},
+                    new LanguageCode {Code = "ka", Name = "Georgian"},
+                    new LanguageCode {Code = "de", Name = "German"},
+                    new LanguageCode {Code = "el", Name = "Greek"},
+                    new LanguageCode {Code = "gu", Name = "Gujarati"},
+                    new LanguageCode {Code = "ht", Name = "Haitian Creole"},
+                    new LanguageCode {Code = "iw", Name = "Hebrew"},
+                    new LanguageCode {Code = "hi", Name = "Hindi"},
+                    new LanguageCode {Code = "hu", Name = "Hungarian"},
+                    new LanguageCode {Code = "is", Name = "Icelandic"},
+                    new LanguageCode {Code = "id", Name = "Indonesian"},
+                    new LanguageCode {Code = "ga", Name = "Irish"},
+                    new LanguageCode {Code = "it", Name = "Italian"},
+                    new LanguageCode {Code = "ja", Name = "Japanese"},
+                    new LanguageCode {Code = "kn", Name = "Kannada"},
+                    new LanguageCode {Code = "ko", Name = "Korean"},
+                    new LanguageCode {Code = "lo", Name = "Lao"},
+                    new LanguageCode {Code = "la", Name = "Latin"},
+                    new LanguageCode {Code = "lv", Name = "Latvian"},
+                    new LanguageCode {Code = "lt", Name = "Lithuanian"},
+                    new LanguageCode {Code = "mk", Name = "Macedonian"},
+                    new LanguageCode {Code = "ms", Name = "Malay"},
+                    new LanguageCode {Code = "mt", Name = "Maltese"},
+                    new LanguageCode {Code = "no", Name = "Norwegian"},
+                    new LanguageCode {Code = "fa", Name = "Persian"},
+                    new LanguageCode {Code = "pl", Name = "Polish"},
+                    new LanguageCode {Code = "pt", Name = "Portuguese"},
+                    new LanguageCode {Code = "ro", Name = "Romanian"},
+                    new LanguageCode {Code = "ru", Name = "Russian"},
+                    new LanguageCode {Code = "sr", Name = "Serbian"},
+                    new LanguageCode {Code = "sk", Name = "Slovak"},
+                    new LanguageCode {Code = "sl", Name = "Slovenian"},
+                    new LanguageCode {Code = "es", Name = "Spanish"},
+                    new LanguageCode {Code = "sw", Name = "Swahili"},
+                    new LanguageCode {Code = "sv", Name = "Swedish"},
+                    new LanguageCode {Code = "ta", Name = "Tamil"},
+                    new LanguageCode {Code = "te", Name = "Telugu"},
+                    new LanguageCode {Code = "th", Name = "Thai"},
+                    new LanguageCode {Code = "tr", Name = "Turkish"},
+                    new LanguageCode {Code = "uk", Name = "Ukrainian"},
+                    new LanguageCode {Code = "ur", Name = "Urdu"},
+                    new LanguageCode {Code = "vi", Name = "Vietnamese"},
+                    new LanguageCode {Code = "cy", Name = "Welsh"},
+                    new LanguageCode {Code = "yi", Name = "Yiddish"}
+                };
 
-            result.Add(new LanguageCode() { Code = "af", Name = "Afrikaans" });
-            result.Add(new LanguageCode() { Code = "sq", Name = "Albanian" });
-            result.Add(new LanguageCode() { Code = "ar", Name = "Arabic" });
-            result.Add(new LanguageCode() { Code = "hy", Name = "Armenian" });
-            result.Add(new LanguageCode() { Code = "az", Name = "Azerbaijani" });
-            result.Add(new LanguageCode() { Code = "eu", Name = "Basque" });
-            result.Add(new LanguageCode() { Code = "be", Name = "Belarusian" });
-            result.Add(new LanguageCode() { Code = "bn", Name = "Bengali" });
-            result.Add(new LanguageCode() { Code = "bg", Name = "Bulgarian" });
-            result.Add(new LanguageCode() { Code = "ca", Name = "Catalan" });
-            result.Add(new LanguageCode() { Code = "zh-CN", Name = "Chinese (Simplified)" });
-            result.Add(new LanguageCode() { Code = "zh-TW", Name = "Chinese (Traditional)" });
-            result.Add(new LanguageCode() { Code = "hr", Name = "Croatian" });
-            result.Add(new LanguageCode() { Code = "cs", Name = "Czech" });
-            result.Add(new LanguageCode() { Code = "da", Name = "Danish" });
-            result.Add(new LanguageCode() { Code = "nl", Name = "Dutch" });
-            result.Add(new LanguageCode() { Code = "en", Name = "English" });
-            result.Add(new LanguageCode() { Code = "eo", Name = "Esperanto" });
-            result.Add(new LanguageCode() { Code = "et", Name = "Estonian" });
-            result.Add(new LanguageCode() { Code = "tl", Name = "Filipino" });
-            result.Add(new LanguageCode() { Code = "fi", Name = "Finnish" });
-            result.Add(new LanguageCode() { Code = "fr", Name = "French" });
-            result.Add(new LanguageCode() { Code = "gl", Name = "Galician" });
-            result.Add(new LanguageCode() { Code = "ka", Name = "Georgian" });
-            result.Add(new LanguageCode() { Code = "de", Name = "German" });
-            result.Add(new LanguageCode() { Code = "el", Name = "Greek" });
-            result.Add(new LanguageCode() { Code = "gu", Name = "Gujarati" });
-            result.Add(new LanguageCode() { Code = "ht", Name = "Haitian Creole" });
-            result.Add(new LanguageCode() { Code = "iw", Name = "Hebrew" });
-            result.Add(new LanguageCode() { Code = "hi", Name = "Hindi" });
-            result.Add(new LanguageCode() { Code = "hu", Name = "Hungarian" });
-            result.Add(new LanguageCode() { Code = "is", Name = "Icelandic" });
-            result.Add(new LanguageCode() { Code = "id", Name = "Indonesian" });
-            result.Add(new LanguageCode() { Code = "ga", Name = "Irish" });
-            result.Add(new LanguageCode() { Code = "it", Name = "Italian" });
-            result.Add(new LanguageCode() { Code = "ja", Name = "Japanese" });
-            result.Add(new LanguageCode() { Code = "kn", Name = "Kannada" });
-            result.Add(new LanguageCode() { Code = "ko", Name = "Korean" });
-            result.Add(new LanguageCode() { Code = "lo", Name = "Lao" });
-            result.Add(new LanguageCode() { Code = "la", Name = "Latin" });
-            result.Add(new LanguageCode() { Code = "lv", Name = "Latvian" });
-            result.Add(new LanguageCode() { Code = "lt", Name = "Lithuanian" });
-            result.Add(new LanguageCode() { Code = "mk", Name = "Macedonian" });
-            result.Add(new LanguageCode() { Code = "ms", Name = "Malay" });
-            result.Add(new LanguageCode() { Code = "mt", Name = "Maltese" });
-            result.Add(new LanguageCode() { Code = "no", Name = "Norwegian" });
-            result.Add(new LanguageCode() { Code = "fa", Name = "Persian" });
-            result.Add(new LanguageCode() { Code = "pl", Name = "Polish" });
-            result.Add(new LanguageCode() { Code = "pt", Name = "Portuguese" });
-            result.Add(new LanguageCode() { Code = "ro", Name = "Romanian" });
-            result.Add(new LanguageCode() { Code = "ru", Name = "Russian" });
-            result.Add(new LanguageCode() { Code = "sr", Name = "Serbian" });
-            result.Add(new LanguageCode() { Code = "sk", Name = "Slovak" });
-            result.Add(new LanguageCode() { Code = "sl", Name = "Slovenian" });
-            result.Add(new LanguageCode() { Code = "es", Name = "Spanish" });
-            result.Add(new LanguageCode() { Code = "sw", Name = "Swahili" });
-            result.Add(new LanguageCode() { Code = "sv", Name = "Swedish" });
-            result.Add(new LanguageCode() { Code = "ta", Name = "Tamil" });
-            result.Add(new LanguageCode() { Code = "te", Name = "Telugu" });
-            result.Add(new LanguageCode() { Code = "th", Name = "Thai" });
-            result.Add(new LanguageCode() { Code = "tr", Name = "Turkish" });
-            result.Add(new LanguageCode() { Code = "uk", Name = "Ukrainian" });
-            result.Add(new LanguageCode() { Code = "ur", Name = "Urdu" });
-            result.Add(new LanguageCode() { Code = "vi", Name = "Vietnamese" });
-            result.Add(new LanguageCode() { Code = "cy", Name = "Welsh" });
-            result.Add(new LanguageCode() { Code = "yi", Name = "Yiddish" });
-            
             return result;
         }
 
@@ -322,40 +324,29 @@ namespace TranslationHelper
         {
             try
             {
-                var translateHelper = new GoogleTranslateEngine() { ToCulture = SelectedLanguageCode.Code };
-                var overwriteAll = false;
+                var translateHelper = new GoogleTranslateEngine { ToCulture = SelectedLanguageCode.Code };
+                var writeTargetResult = TargetWriteResponse.Skip;
 
-                using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
+                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
                 {
                     foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
                     {
                         var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
                         var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
-
-                        //  TODO: Fix this a bit.
-                        if (overwriteAll)
-                        {
-                            resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                            DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                            sourcePair.Key, sourcePair.Value, translatedValue)));
-                            continue;
-                        }
                         
-                        var writeTargetResult = WriteTranslatedValueToTarget(existingTargetValue, translatedValue);
-                        if (writeTargetResult == TargetWriteResponse.Cancel)
+                        if (writeTargetResult != TargetWriteResponse.OverwriteAll)
                         {
-                            View.DisplayMessageBox("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
-                            break;
+                            writeTargetResult = OverwriteWarningWithResult(existingTargetValue, translatedValue);
+                            if (writeTargetResult == TargetWriteResponse.Cancel)
+                            {
+                                View.DisplayMessageBox("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                                break;
+                            }
                         }
 
-                        overwriteAll = (writeTargetResult == TargetWriteResponse.OverwriteAll);
-
-                        if (writeTargetResult != TargetWriteResponse.Skip)
-                        {
-                            resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                            DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                            sourcePair.Key, sourcePair.Value, translatedValue)));
-                        }
+                        if (writeTargetResult == TargetWriteResponse.Skip) continue;
+                        
+                        WriteValueToTargetFileWithOutput(resourceFileHelper, sourcePair, translatedValue);
                     }
                 }
             }
@@ -365,15 +356,44 @@ namespace TranslationHelper
                                        MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
         }
+        
+        private void ParseTranslationFile()
+        {
+            try
+            {
+                var excelEngine = new ExcelTranslateEngine(new DispatchService());
+                excelEngine.ToolOutput += delegate(object sender, OutputEventArgs args)
+                    {
+                        View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(args.Output)));
+                    };
 
-        private TargetWriteResponse WriteTranslatedValueToTarget(string existingTargetValue, string translatedValue)
+                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
+                {
+                    excelEngine.TranslateWorkbook(resourceFileHelper, TranslationFile, 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                View.DisplayMessageBox(String.Format("Description: {0}\n\nSource: {1}", ex.Message, ex.Source), "Error Occurred",
+                                       MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
+        }
+
+        private void WriteValueToTargetFileWithOutput(ResourceFileHelper resourceFileHelper, KeyValuePair<string, string> sourceValue, string translatedValue)
+        {
+            resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
+            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                                                            sourceValue.Key, sourceValue.Value, translatedValue))));
+        }
+
+        private TargetWriteResponse OverwriteWarningWithResult(string existingTargetValue, string translatedValue)
         {
             if (string.IsNullOrWhiteSpace(existingTargetValue)) return TargetWriteResponse.Overwrite;
             if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase)) return TargetWriteResponse.Skip;
 
             var response = TargetWriteResponse.Skip;
 
-            DispatchService.Invoke(() =>
+            (new DispatchService()).Invoke(() =>
             {
                 var vm = new OverwriteWarningViewModel(new OverwriteWarning())
                 {
@@ -400,97 +420,6 @@ namespace TranslationHelper
             return response;
         }
 
-        //  TODO: Focus on making this work today
-        private void ParseTranslationFile()
-        {
-            const int offset = 4;
-            const int englishColumn = 1;
-            const int translatedValueColumn = 2;
-            
-            var excelApp = new Microsoft.Office.Interop.Excel.Application();
-            MessageBoxResult writeToAllKeysAnswer;
-
-            try
-            {
-                var excelWb = excelApp.Workbooks.Open(this.TranslationFile, false, true);
-                var workSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelWb.Worksheets[1];
-                var range = workSheet.UsedRange;
-                
-                using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
-                {
-                    for (int rowIndex = offset; rowIndex <= range.Rows.Count; rowIndex++)
-                    {
-                        var englishValue = (range.Cells.Value2[rowIndex, englishColumn] ?? String.Empty).ToString().Trim().ToLower();
-                        var translatedValue = (range.Cells.Value2[rowIndex, translatedValueColumn] ?? String.Empty).ToString().Trim();
-
-                        if (String.IsNullOrWhiteSpace(englishValue) || String.IsNullOrWhiteSpace(translatedValue) || translatedValue.ToLower() == TRANSLATION_TO_SKIP)
-                            continue;
-
-                        Dictionary<string, string> sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
-                        if (sourceValues.Any() == false) continue;
-
-                        writeToAllKeysAnswer = MessageBoxResult.No;
-                        if (sourceValues.Count() > 1)
-                            writeToAllKeysAnswer = View.DisplayMessageBox(String.Format("The value \"{0}\" exists for multiple keys.\n\n", englishValue) +
-                                                                          String.Join("\n", sourceValues.Select(v => String.Format("\tKey:{0} => Value:{1}", v.Key, v.Value))) + "\n\n" +
-                                                                          String.Format("Use translation \"{0}\" for all keys?", translatedValue), "Use Translation For All?",
-                                                                          MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes);
-
-                        if (writeToAllKeysAnswer == MessageBoxResult.Cancel)
-                            break;
-
-                        foreach (var sourcePair in sourceValues)
-                        {
-                            if (writeToAllKeysAnswer == MessageBoxResult.No)
-                            {
-                                //var overwriteDifferentAnswer = GetDifferentTranslationOverwriteAnswer(resourceFileHelper, sourcePair.Key, translatedValue);
-                                var vm = new OverwriteWarningViewModel(new OverwriteWarning());
-                                vm.View.ShowDialog();
-                                if (vm.Answer == OverwriteResult.Cancel)
-                                    break;
-                            
-                                resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue,
-                                                                              (vm.Answer == OverwriteResult.Yes));
-                            }
-                            else
-                                resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-
-                            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                                                                                sourcePair.Key, sourcePair.Value, translatedValue))));
-                        }
-                    }
-
-                    excelWb.Close(false, Type.Missing, Type.Missing);
-                    excelApp.Workbooks.Close();
-                    Marshal.ReleaseComObject(range);
-                    Marshal.ReleaseComObject(excelWb);
-                    range = null;
-                    workSheet = null;
-                    excelWb = null;
-                }
-            }
-            catch(Exception ex)
-            {
-                View.DisplayMessageBox(String.Format("Description: {0}\n\nSource: {1}", ex.Message, ex.Source), "Error Occurred",
-                                       MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-            }
-            finally
-            {
-                excelApp.Quit();
-                Marshal.ReleaseComObject(excelApp);
-                Marshal.FinalReleaseComObject(excelApp);
-                excelApp = null;
-            }
-        }
-
         #endregion
-    }
-
-    public enum TargetWriteResponse
-    {
-        Skip,
-        Cancel,
-        Overwrite,
-        OverwriteAll,        
     }
 }

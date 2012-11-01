@@ -74,16 +74,20 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="DelegateCommand.cs" />
-    <Compile Include="DispatcherService.cs" />
-    <Compile Include="Engines\GoogleTranslationResult.cs" />
-    <Compile Include="OverwriteResult.cs" />
+    <Compile Include="Engines\ExcelTranslateEngine.cs" />
+    <Compile Include="Helpers\DelegateCommand.cs" />
+    <Compile Include="Helpers\DispatcherService.cs" />
+    <Compile Include="Helpers\IResourceFileHelper.cs" />
+    <Compile Include="Infos\GoogleTranslationResult.cs" />
+    <Compile Include="Enums\OverwriteResult.cs" />
+    <Compile Include="Infos\OutputEventArgs.cs" />
     <Compile Include="OverwriteWarning.xaml.cs">
       <DependentUpon>OverwriteWarning.xaml</DependentUpon>
     </Compile>
     <Compile Include="OverwriteWarningViewModel.cs" />
-    <Compile Include="PropertyHelper.cs" />
-    <Compile Include="ResourceFileHelper.cs" />
+    <Compile Include="Helpers\PropertyHelper.cs" />
+    <Compile Include="Helpers\ResourceFileHelper.cs" />
+    <Compile Include="Enums\TargetWriteResponse.cs" />
     <Compile Include="TranslationHelperViewModel.cs" />
     <Page Include="OverwriteWarning.xaml">
       <SubType>Designer</SubType>
@@ -98,7 +102,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Engines\GoogleTranslateEngine.cs" />
-    <Compile Include="LanguageCode.cs" />
+    <Compile Include="Infos\LanguageCode.cs" />
     <Compile Include="TranslationHelperView.xaml.cs">
       <DependentUpon>TranslationHelperView.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -131,7 +135,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Select-Language-32x32.ico" />
+    <Resource Include="Images\Select-Language-32x32.ico" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

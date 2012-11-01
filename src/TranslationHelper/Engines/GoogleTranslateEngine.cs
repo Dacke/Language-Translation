@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Script.Serialization;
+using TranslationHelper.Infos;
 
 namespace TranslationHelper.Engines
 {

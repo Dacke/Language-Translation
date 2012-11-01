@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using TranslationHelper.Helpers;
 
 namespace TranslationHelper
 {

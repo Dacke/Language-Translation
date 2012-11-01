@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
 using NUnit.Framework;
-using TranslationHelper;
+using TranslationHelper.Helpers;
 
 namespace TranslationHelperTests
 {
     [TestFixture]
-    public class ResourceFileHelperTests : SpecificationBase
+    public class when_resource_file_helper_spec : SpecificationBase
     {
         private ResourceFileHelper sut;
         private string _sourceFilePath;

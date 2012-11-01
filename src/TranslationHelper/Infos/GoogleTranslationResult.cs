@@ -1,4 +1,4 @@
-﻿namespace TranslationHelper.Engines
+﻿namespace TranslationHelper.Infos
 {
     internal class GoogleTranslationResult
     {
