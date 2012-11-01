@@ -145,8 +145,8 @@ namespace TranslationHelper
             this.TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
-            this.SourceFile = @"C:\Users\eDorothy\Desktop\testfiles\EnglishResourceTestFile.resx";
-            this.TargetFile = @"C:\Users\eDorothy\Desktop\testfiles\empty.resx";
+            this.SourceFile = @"C:\Users\Dacke\Desktop\testfiles\EnglishResourceTestFile.resx";
+            this.TargetFile = @"C:\Users\Dacke\Desktop\testfiles\empty.resx";
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
             
             this.View = view;
@@ -318,22 +318,29 @@ namespace TranslationHelper
             return result;
         }
 
+
+
         private void ParseFromGoogle()
         {
             try
             {
                 var translateHelper = new GoogleTranslateEngine() { ToCulture = SelectedLanguageCode.Code };
+                var overwriteAll = false;
+                var cancelOperation = false;
 
                 using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
                 {
-                    var overwriteAll = false;
-                    var cancelOperation = false;
-
                     foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
                     {
                         var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
                         var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
                         
+                        //  TODO: 
+                        //  1) Determine if value needs to be overwritten (define rules)
+                        //  2) (if) Ask user what they want to do
+                        //  3) Overwrite All only works once per process
+
+                        if (!String.IsNullOrWhiteSpace(existingTargetValue) && !existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase))
 
 
 
