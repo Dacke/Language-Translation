@@ -318,15 +318,12 @@ namespace TranslationHelper
             return result;
         }
 
-
-
         private void ParseFromGoogle()
         {
             try
             {
                 var translateHelper = new GoogleTranslateEngine() { ToCulture = SelectedLanguageCode.Code };
                 var overwriteAll = false;
-                var cancelOperation = false;
 
                 using (var resourceFileHelper = new ResourceFileHelper(this.SourceFile, this.TargetFile))
                 {
@@ -334,63 +331,31 @@ namespace TranslationHelper
                     {
                         var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
                         var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
-                        
-                        //  TODO: 
-                        //  1) Determine if value needs to be overwritten (define rules)
-                        //  2) (if) Ask user what they want to do
-                        //  3) Overwrite All only works once per process
 
-                        if (!String.IsNullOrWhiteSpace(existingTargetValue) && !existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase))
-
-
-
-
-                        //  TODO: This WHOLE thing is terrible, PLEASE find a way to refactor it.
-                        if (String.IsNullOrWhiteSpace(existingTargetValue) == false)
+                        //  TODO: Fix this a bit.
+                        if (overwriteAll)
                         {
-                            if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase) == false)
-                            {
-                                if (overwriteAll)
-                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                                else
-                                    DispatchService.Invoke(() =>
-                                        {
-                                            var vm = new OverwriteWarningViewModel(new OverwriteWarning())
-                                                {
-                                                    Question = "Do you wish to overwrite the existing value with the newly translated one?",
-                                                    Description = "A value already exists in the targeted resource file.",
-                                                    ExistingValue = existingTargetValue,
-                                                    TranslationValue = translatedValue,
-                                                };
-                                            vm.View.ShowDialog();
-                                            switch (vm.Answer)
-                                            {
-                                                case OverwriteResult.Yes:
-                                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                                                    break;
-                                                case OverwriteResult.YesToAll:
-                                                    resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
-                                                    overwriteAll = true;
-                                                    break;
-                                                case OverwriteResult.Cancel:
-                                                    MessageBox.Show("The translation operation has been aborted.", "Aborted",
-                                                                    MessageBoxButton.OK, MessageBoxImage.Information);
-                                                    cancelOperation = true;
-                                                    break;
-                                            }
-                                        });
-                            }
-                        }
-                        else
-                            resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, false);
-                        //  TODO: This WHOLE thing is terrible, PLEASE find a way to refactor it.
-
-                        if (cancelOperation) break;
-
-
-                        //  TODO: Fix this to truly represent what happened.
-                        DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                            resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                            DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
                                                                                             sourcePair.Key, sourcePair.Value, translatedValue)));
+                            continue;
+                        }
+                        
+                        var writeTargetResult = WriteTranslatedValueToTarget(existingTargetValue, translatedValue);
+                        if (writeTargetResult == TargetWriteResponse.Cancel)
+                        {
+                            View.DisplayMessageBox("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
+                            break;
+                        }
+
+                        overwriteAll = (writeTargetResult == TargetWriteResponse.OverwriteAll);
+
+                        if (writeTargetResult != TargetWriteResponse.Skip)
+                        {
+                            resourceFileHelper.WriteNameValuePairToTarget(sourcePair.Key, translatedValue, true);
+                            DispatchService.Invoke(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
+                                                                                            sourcePair.Key, sourcePair.Value, translatedValue)));
+                        }
                     }
                 }
             }
@@ -401,6 +366,41 @@ namespace TranslationHelper
             }
         }
 
+        private TargetWriteResponse WriteTranslatedValueToTarget(string existingTargetValue, string translatedValue)
+        {
+            if (string.IsNullOrWhiteSpace(existingTargetValue)) return TargetWriteResponse.Overwrite;
+            if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase)) return TargetWriteResponse.Skip;
+
+            var response = TargetWriteResponse.Skip;
+
+            DispatchService.Invoke(() =>
+            {
+                var vm = new OverwriteWarningViewModel(new OverwriteWarning())
+                {
+                    Question = "Do you wish to overwrite the existing value with the newly translated one?",
+                    Description = "A value already exists in the targeted resource file.",
+                    ExistingValue = existingTargetValue,
+                    TranslationValue = translatedValue,
+                };
+                vm.View.ShowDialog();
+                switch (vm.Answer)
+                {
+                    case OverwriteResult.Yes:
+                        response = TargetWriteResponse.Overwrite;
+                        break;
+                    case OverwriteResult.YesToAll:
+                        response = TargetWriteResponse.OverwriteAll;
+                        break;
+                    case OverwriteResult.Cancel:
+                        response = TargetWriteResponse.Cancel;
+                        break;
+                }
+            });
+
+            return response;
+        }
+
+        //  TODO: Focus on making this work today
         private void ParseTranslationFile()
         {
             const int offset = 4;
@@ -484,5 +484,13 @@ namespace TranslationHelper
         }
 
         #endregion
+    }
+
+    public enum TargetWriteResponse
+    {
+        Skip,
+        Cancel,
+        Overwrite,
+        OverwriteAll,        
     }
 }
