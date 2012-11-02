@@ -10,7 +10,7 @@ namespace TranslationHelperTests
     /// It can be used to make sure that Google has not changed their interface.
     /// </summary>
     /// <remarks>Uses English to Spanish as the translation language</remarks>
-    [TestFixture]
+    [TestFixture, Ignore]
     class when_google_translation_engine_online_spec : SpecificationBase
     {
         private GoogleTranslateEngine sut;
@@ -54,7 +54,7 @@ namespace TranslationHelperTests
         }
     }
 
-    [TestFixture]
+    [TestFixture, Ignore]
     class when_google_translation_engine_chinese_spec : SpecificationBase
     {
         private GoogleTranslateEngine sut;

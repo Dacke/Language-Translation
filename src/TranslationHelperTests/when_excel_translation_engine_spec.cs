@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using NUnit.Framework;
@@ -50,13 +51,97 @@ namespace TranslationHelperTests
         }
     }
 
+    [TestFixture]
+    public class when_excel_engine_export_spec : excel_translation_engine_spec_base
+    {
+        private List<ExcelTranslation> values;
+        private string targetFilePath;
+
+        protected override void Given()
+        {
+            base.Given();
+
+            var templateFilePath = (Environment.CurrentDirectory + "\\SampleResourceFiles\\TranslationTemplate.xlsx");
+            targetFilePath = String.Format("{0}\\SampleResourceFiles\\target_{1}.xlsx", Environment.CurrentDirectory, Guid.NewGuid());
+            File.Copy(templateFilePath, targetFilePath, true);
+
+            values = new List<ExcelTranslation>
+                {
+                    new ExcelTranslation {Key = "Key_Quick", EnglishValue = "Quick", Translation = "Rápido"},
+                    new ExcelTranslation {Key = "Key_Brown", EnglishValue = "Brown", Translation ="Marrón"},
+                    new ExcelTranslation {Key = "Key_Fox", EnglishValue = "Fox", Translation ="Zorro"},
+                    new ExcelTranslation {Key = "Key_Jumped", EnglishValue = "Jumped", Translation ="Saltó"},
+                    new ExcelTranslation {Key = "Key_Over", EnglishValue = "Over", Translation ="Por Encima"},
+                    new ExcelTranslation {Key = "Key_The", EnglishValue = "The", Translation ="La"},
+                    new ExcelTranslation {Key = "Key_Lazy", EnglishValue = "Lazy", Translation ="Perezoso"},
+                    new ExcelTranslation {Key = "Key_Dog", EnglishValue = "Dog", Translation ="Perro"},
+                };
+        }
+
+        protected override void CleanUp()
+        {
+            base.CleanUp();
+            if (File.Exists(targetFilePath))
+                File.Delete(targetFilePath);
+        }
+
+        protected override void When()
+        {
+            sut.ExportValuesToWorkbook(values, targetFilePath, WORKSHEET_NUMBER);
+        }
+
+        [Then]
+        public void should_read_all_written_values()
+        {
+            var readValues = sut.GetAllValues(targetFilePath, WORKSHEET_NUMBER);
+            Assert.That(readValues.Count(), Is.EqualTo(values.Count));
+        }
+    }
+
+    [TestFixture]
+    public class when_excel_engine_read_spec : excel_translation_engine_spec_base
+    {
+        private IEnumerable<ExcelTranslation> values;
+
+        protected override void When()
+        {
+            values = sut.GetAllValues(excelFilePath, WORKSHEET_NUMBER);
+        }
+
+        [Then]
+        public void should_read_all_values_from_spreadsheet()
+        {
+            Assert.That(values.Count(), Is.EqualTo(5));
+        }
+
+        [Then]
+        public void should_contain_active_key()
+        {
+            Assert.That(values.Count(fn => fn.Key == "Key_Active"), Is.EqualTo(1));
+        }
+
+        [Then]
+        public void should_contain_inactive_english_value()
+        {
+            Assert.That(values.Count(fn => fn.EnglishValue == "inactive"), Is.EqualTo(1));
+        }
+
+        [Then]
+        public void should_contain_agent_type_translation()
+        {
+            Assert.That(values.Count(fn => fn.Translation == "Tipo de agente"), Is.EqualTo(1));
+        }
+    }
+
     public abstract class excel_translation_engine_spec_base : SpecificationBase
     {
-        private string excelFilePath;
         private IResourceFileHelper resourceFileHelper;
 
+        protected string excelFilePath;
         protected ExcelTranslateEngine sut;
         protected List<TranslatedItem> testOutput;
+
+        protected const int WORKSHEET_NUMBER = 1;
 
         protected override void Given()
         {
@@ -83,7 +168,7 @@ namespace TranslationHelperTests
         protected override void When()
         {
             sut.ToolOutput += SutOnToolOutput;
-            sut.TranslateWorkbook(resourceFileHelper, excelFilePath, 1);
+            sut.TranslateWorkbook(resourceFileHelper, excelFilePath, WORKSHEET_NUMBER);
             sut.ToolOutput += SutOnToolOutput;
         }
     }

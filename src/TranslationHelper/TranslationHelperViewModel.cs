@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -40,6 +41,7 @@ namespace TranslationHelper
         public string TranslateLabel { get { return "Translate"; } }
         public string TranslationsFileLabel { get { return "Translations File"; } }
         public string UseGoogleLabel { get { return "Check to use Google for the translation engine"; } }
+        public string ExportLabel { get { return "Export"; } }
 
         #endregion
 
@@ -113,6 +115,7 @@ namespace TranslationHelper
         public ICommand BrowseTranslationFileCommand { get; set; }
         public ICommand TranslateFromGoogleCommand { get; set; }
         public ICommand TranslateCommand { get; set; }
+        public ICommand ExportCommand { get; set; }
 
         #endregion
 
@@ -136,6 +139,7 @@ namespace TranslationHelper
             BrowseTranslationFileCommand = new DelegateCommand(m => OnTranslationFileBrowse());
             TranslateFromGoogleCommand = new DelegateCommand(m => OnGoogleTranslationClick());
             TranslateCommand = new DelegateCommand(m => OnTranslateCommand());
+            ExportCommand = new DelegateCommand(m => OnExportCommand());
 
             OnGoogleTranslationClick();
 
@@ -219,6 +223,50 @@ namespace TranslationHelper
                         MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
                                      MessageBoxButton.OK, MessageBoxImage.Information);
                     }, TaskCreationOptions.AttachedToParent);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                if (Debugger.IsAttached)
+                    Debugger.Break();
+                MessageBox.Show(ex.Message, ex.Source, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void OnExportCommand()
+        {
+            try
+            {
+                var dispatchService = new DispatchService();
+                var excelEngine = new ExcelTranslateEngine(dispatchService);
+
+                dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
+
+                var exportFilename = (Environment.CurrentDirectory + "\\TranslationExport_" +
+                                      Guid.NewGuid().ToString().Trim(new char[] {'{', '}'}).Substring(0, 5) + ".xlsx");
+                
+                File.Copy((Environment.CurrentDirectory + "\\TranslationTemplate.xlsx"), exportFilename, true);
+
+                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
+                {
+                    var sourceInformation = resourceFileHelper.GetAllNameValuesFromSource();
+                    var targetInformation = resourceFileHelper.GetAllNameValuesFromTarget();
+
+                    var exportingValues = from srcInfo in sourceInformation
+                                          join trgInfo in targetInformation on srcInfo.Key equals trgInfo.Key
+                                          select new ExcelTranslation
+                                              {
+                                                  Key = trgInfo.Key,
+                                                  EnglishValue = srcInfo.Value,
+                                                  Translation = trgInfo.Value
+                                              };
+
+                    excelEngine.ExportValuesToWorkbook(exportingValues, exportFilename, 1);
+                }
+
+                dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
+
+                Process.Start(exportFilename);
             }
             catch (Exception ex)
             {

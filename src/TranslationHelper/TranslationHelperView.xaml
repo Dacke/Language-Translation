@@ -17,6 +17,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="150" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -29,16 +30,13 @@
             <RowDefinition Height="60" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Label Content="{Binding EnglishResourceFileLabel}" 
-               Grid.Row="0" Grid.Column="0" />
-        <TextBox x:Name="txtSourceFile" Text="{Binding Path=SourceFile, Mode=TwoWay}" Grid.Row="1" Grid.Column="0" Margin="5,3,5,3" />
-        <Button x:Name="cmdSourceBrowse" Content="{Binding BrowseLabel}" 
-                Grid.Row="1" Grid.Column="1" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseSourceFileCommand}" />
+        <Label Content="{Binding EnglishResourceFileLabel}" Grid.Row="0" Grid.Column="0" />
+        <TextBox x:Name="txtSourceFile" Text="{Binding Path=SourceFile, Mode=TwoWay}" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3" />
+        <Button x:Name="cmdSourceBrowse" Content="{Binding BrowseLabel}" Grid.Row="1" Grid.Column="2" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseSourceFileCommand}" />
         <Label Content="{Binding TargetResourceFileLabel}" Grid.Row="2" Grid.Column="0"  />
-        <TextBox x:Name="txtTargetFile" Text="{Binding Path=TargetFile, Mode=TwoWay}" Grid.Row="3" Grid.Column="0" Margin="5,3,5,3" />
-        <Button x:Name="cmdTargetBrowse" Content="{Binding BrowseLabel}"
-                Grid.Row="3" Grid.Column="1" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseTargetFileCommand}" />
-        <Grid Grid.Row="4" Grid.Column="0">
+        <TextBox x:Name="txtTargetFile" Text="{Binding Path=TargetFile, Mode=TwoWay}" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3" />
+        <Button x:Name="cmdTargetBrowse" Content="{Binding BrowseLabel}" Grid.Row="3" Grid.Column="2" Style="{StaticResource ButtonTemplate}" Command="{Binding BrowseTargetFileCommand}" />
+        <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="200" />
@@ -54,17 +52,15 @@
                       IsEnabled="{Binding UseGoogleTranslationEngine, Mode=OneWay}" SelectedValue="{Binding SelectedLanguageCode, Mode=TwoWay}"  />
         </Grid>
         <Label Content="{Binding TranslationsFileLabel}" Grid.Row="5" Grid.Column="0" />
-        <TextBox x:Name="txtTranslationsFile" Text="{Binding Path=TranslationFile, Mode=TwoWay}" IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}"
-                 Grid.Row="6" Grid.Column="0" Margin="5,3,5,3" />
-        <Button x:Name="cmdTranslationsBrowse" Content="{Binding BrowseLabel}" Grid.Row="6" Grid.Column="1" Style="{StaticResource ButtonTemplate}"
+        <TextBox x:Name="txtTranslationsFile" Text="{Binding Path=TranslationFile, Mode=TwoWay}" IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3" />
+        <Button x:Name="cmdTranslationsBrowse" Content="{Binding BrowseLabel}" Grid.Row="6" Grid.Column="2" Style="{StaticResource ButtonTemplate}" 
                 IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}" Command="{Binding BrowseTranslationFileCommand, Mode=OneWay}" />
-        <Label x:Name="lblOutput" Content="{Binding OutputLabel}" 
-                Grid.Row="7" Grid.Column="0" Margin="5,3,5,3" VerticalAlignment="Bottom" />
-        <Button x:Name="cmdTranslate" Content="{Binding TranslateLabel}" Grid.Row="7" Grid.Column="1" Style="{StaticResource ButtonTemplate}" 
-                Command="{Binding TranslateCommand}"/>
+        <Label x:Name="lblOutput" Content="{Binding OutputLabel}" Grid.Row="7" Grid.Column="0" Margin="5,3,5,3" VerticalAlignment="Bottom" />
+        <Button x:Name="cmdTranslate" Content="{Binding TranslateLabel}" Grid.Row="7" Grid.Column="1" Style="{StaticResource ButtonTemplate}" Command="{Binding TranslateCommand}"/>
+        <Button x:Name="cmdExport" Content="{Binding ExportLabel}" Grid.Row="7" Grid.Column="2" Style="{StaticResource ButtonTemplate}" Command="{Binding ExportCommand}"/>
         <DataGrid x:Name="dgStatus" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" AlternatingRowBackground="Gainsboro" AlternationCount="2"
                   AutoGenerateColumns="False" HorizontalGridLinesBrush="Transparent" VerticalGridLinesBrush="LightGray" EnableRowVirtualization="True"
-                  Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3">
+                  Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="5,3,5,3">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Key" Binding="{Binding DataKey}" />
                 <DataGridTextColumn Header="English Value" Binding="{Binding EnglishValue}" />

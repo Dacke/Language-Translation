@@ -78,6 +78,7 @@
     <Compile Include="Helpers\DelegateCommand.cs" />
     <Compile Include="Helpers\DispatcherService.cs" />
     <Compile Include="Helpers\IResourceFileHelper.cs" />
+    <Compile Include="Infos\ExcelTranslation.cs" />
     <Compile Include="Infos\GoogleTranslationResult.cs" />
     <Compile Include="Enums\OverwriteResult.cs" />
     <Compile Include="Infos\OutputEventArgs.cs" />
@@ -146,6 +147,9 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <None Include="TranslationTemplate.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Select-Language-32x32.ico" />

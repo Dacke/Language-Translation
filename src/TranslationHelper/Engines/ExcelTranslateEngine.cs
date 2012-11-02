@@ -29,15 +29,13 @@ namespace TranslationHelper.Engines
 
         public void TranslateWorkbook(IResourceFileHelper resourceFileHelper, string excelFile, int selectedWorksheet)
         {
-            var excelWb = excelApp.Workbooks.Open(excelFile, false, true);
-            var workSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelWb.Worksheets[selectedWorksheet];
-            var range = workSheet.UsedRange;
-
-            for (int rowIndex = OFFSET; rowIndex <= range.Rows.Count; rowIndex++)
+            var cancelOperation = false;
+            var excelTranslations = GetAllValues(excelFile, selectedWorksheet);
+            foreach (var translationResult in excelTranslations)
             {
-                var keyValue = (range.Cells.Value2[rowIndex, KEY_COLUMN] ?? String.Empty).ToString().Trim();
-                var englishValue = (range.Cells.Value2[rowIndex, ENGLISH_COLUMN] ?? String.Empty).ToString().Trim().ToLower();
-                var translatedValue = (range.Cells.Value2[rowIndex, TRANSLATED_VALUE_COLUMN] ?? String.Empty).ToString().Trim();
+                var keyValue = translationResult.Key;
+                var englishValue = translationResult.EnglishValue;
+                var translatedValue = translationResult.Translation;
                 if (String.IsNullOrWhiteSpace(translatedValue))
                     continue;
 
@@ -51,9 +49,16 @@ namespace TranslationHelper.Engines
                 Dictionary<String, String> sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
                 if (sourceValues == null || sourceValues.Any() == false)
                 {
-                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = "WARNING", EnglishValue = englishValue,
-                                                                                                      Translation = "No translation can be made.",
-                                                                                                      Comment = "No Source Key could be found!" } });
+                    ToolOutput.Invoke(this, new TranslatedItemEventArgs
+                    {
+                        Item = new TranslatedItem
+                        {
+                            DataKey = "WARNING",
+                            EnglishValue = englishValue,
+                            Translation = "No translation can be made.",
+                            Comment = "No Source Key could be found!"
+                        }
+                    });
                     continue;
                 }
 
@@ -67,20 +72,28 @@ namespace TranslationHelper.Engines
 
                 if (sourceValues.Count() > 1)
                 {
-                    var writeToAllKeysAnswer = dispatchService.Invoke<MessageBoxResult>(new Func<MessageBoxResult>(() => {
-                            return MessageBox.Show(String.Format("The value \"{0}\" exists for multiple keys.\n\n", englishValue) +
-                                                   String.Join("\n", sourceValues.Select(v => String.Format("\tKey:{0} => Value:{1}", v.Key, v.Value))) + "\n\n" +
-                                                   String.Format("Use translation \"{0}\" for all keys?", translatedValue), "Use Translation For All?",
-                                                   MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes);
-                        }));
+                    var writeToAllKeysAnswer = dispatchService.Invoke<MessageBoxResult>(new Func<MessageBoxResult>(() =>
+                    {
+                        return MessageBox.Show(String.Format("The value \"{0}\" exists for multiple keys.\n\n", englishValue) +
+                                               String.Join("\n", sourceValues.Select(v => String.Format("\tKey:{0} => Value:{1}", v.Key, v.Value))) + "\n\n" +
+                                               String.Format("Use translation \"{0}\" for all keys?", translatedValue), "Use Translation For All?",
+                                               MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes);
+                    }));
                     switch (writeToAllKeysAnswer)
                     {
                         case MessageBoxResult.Yes:
                             foreach (var sourceValue in sourceValues)
                             {
                                 resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, 
-                                                                                                                  Translation = translatedValue } });
+                                ToolOutput.Invoke(this, new TranslatedItemEventArgs
+                                {
+                                    Item = new TranslatedItem
+                                    {
+                                        DataKey = sourceValue.Key,
+                                        EnglishValue = sourceValue.Value,
+                                        Translation = translatedValue
+                                    }
+                                });
                             }
                             break;
                         case MessageBoxResult.No:
@@ -88,31 +101,86 @@ namespace TranslationHelper.Engines
                             foreach (var sourceValue in sourceValues)
                             {
                                 KeyValuePair<string, string> value = sourceValue;
-                                keyResult = dispatchService.Invoke<MessageBoxResult>(new Func<MessageBoxResult>(() => {
-                                        return MessageBox.Show(String.Format("Use translation \"{0}\" for key \"{1}\"?", translatedValue, value.Key),
-                                                                        "Use Translation For Key?", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes); 
-                                    }));
+                                keyResult = dispatchService.Invoke<MessageBoxResult>(new Func<MessageBoxResult>(() => 
+                                {
+                                    return MessageBox.Show(String.Format("Use translation \"{0}\" for key \"{1}\"?", translatedValue, value.Key),
+                                                                    "Use Translation For Key?", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                                }));
 
                                 if (keyResult == MessageBoxResult.Yes)
                                 {
                                     resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, 
-                                                                                                                      Translation = translatedValue } });
+                                    ToolOutput.Invoke(this, new TranslatedItemEventArgs
+                                    {
+                                        Item = new TranslatedItem
+                                        {
+                                            DataKey = sourceValue.Key,
+                                            EnglishValue = sourceValue.Value,
+                                            Translation = translatedValue
+                                        }
+                                    });
                                 }
                             }
                             break;
                         case MessageBoxResult.Cancel:
-                            rowIndex = range.Rows.Count;
+                            cancelOperation = true;
                             break;
                     }
                 }
+
+                if (cancelOperation)
+                    break;
             }
-            
+        }
+
+        public IEnumerable<ExcelTranslation> GetAllValues(string excelFile, int selectedWorksheet)
+        {
+            var excelWb = excelApp.Workbooks.Open(excelFile, false, true);
+            var workSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelWb.Worksheets[selectedWorksheet];
+            var range = workSheet.UsedRange;
+            var translationResults = new List<ExcelTranslation>();
+
+            for (int rowIndex = OFFSET; rowIndex <= range.Rows.Count; rowIndex++)
+            {
+                var keyValue = (range.Cells.Value2[rowIndex, KEY_COLUMN] ?? String.Empty).ToString().Trim();
+                var englishValue = (range.Cells.Value2[rowIndex, ENGLISH_COLUMN] ?? String.Empty).ToString().Trim().ToLower();
+                var translatedValue = (range.Cells.Value2[rowIndex, TRANSLATED_VALUE_COLUMN] ?? String.Empty).ToString().Trim();
+
+                if (string.IsNullOrWhiteSpace(keyValue) & string.IsNullOrWhiteSpace(englishValue) & string.IsNullOrWhiteSpace(translatedValue))
+                    continue;
+                
+                translationResults.Add(new ExcelTranslation { EnglishValue = englishValue, Key = keyValue, Translation = translatedValue });
+            }
+
             excelWb.Close(false, Type.Missing, Type.Missing);
             excelApp.Workbooks.Close();
             Marshal.ReleaseComObject(range);
             Marshal.ReleaseComObject(excelWb);
             range = null;
+            workSheet = null;
+            excelWb = null;
+
+            return translationResults;
+        }
+
+        public void ExportValuesToWorkbook(IEnumerable<ExcelTranslation> translationValues, string excelFile, int selectedWorksheet)
+        {
+            var excelWb = excelApp.Workbooks.Open(excelFile, false, false);
+            var workSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelWb.Worksheets[selectedWorksheet];
+            var rowIndex = OFFSET;
+
+            foreach (var translation in translationValues)
+            {
+                workSheet.Cells[rowIndex, KEY_COLUMN] = translation.Key;
+                workSheet.Cells[rowIndex, ENGLISH_COLUMN] = translation.EnglishValue;
+                workSheet.Cells[rowIndex, TRANSLATED_VALUE_COLUMN] = translation.Translation;
+
+                rowIndex++;
+            }
+
+            excelWb.Close(true, Type.Missing, Type.Missing);
+            excelApp.Workbooks.Close();
+            Marshal.ReleaseComObject(excelWb);
             workSheet = null;
             excelWb = null;
         }
