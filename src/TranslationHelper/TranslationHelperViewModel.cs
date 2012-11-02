@@ -134,14 +134,14 @@ namespace TranslationHelper
             UseGoogleTranslationEngine = true;
             SelectedLanguageCode = LanguageCodes.Single(lc => lc.Code == "es");
 
-            BrowseSourceFileCommand = new DelegateCommand(m => OnSourceBrowse());
-            BrowseTargetFileCommand = new DelegateCommand(m => OnTargetBrowse());
-            BrowseTranslationFileCommand = new DelegateCommand(m => OnTranslationFileBrowse());
-            TranslateFromGoogleCommand = new DelegateCommand(m => OnGoogleTranslationClick());
-            TranslateCommand = new DelegateCommand(m => OnTranslateCommand());
-            ExportCommand = new DelegateCommand(m => OnExportCommand());
+            BrowseSourceFileCommand = new DelegateCommand(m => SourceBrowseClicked());
+            BrowseTargetFileCommand = new DelegateCommand(m => TargetBrowseClicked());
+            BrowseTranslationFileCommand = new DelegateCommand(m => TranslationFileBrowseClicked());
+            TranslateFromGoogleCommand = new DelegateCommand(m => GoogleTranslationClicked());
+            TranslateCommand = new DelegateCommand(m => TranslateButtonClicked());
+            ExportCommand = new DelegateCommand(m => ExportButtonClicked());
 
-            OnGoogleTranslationClick();
+            GoogleTranslationClicked();
 
             TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
@@ -165,7 +165,7 @@ namespace TranslationHelper
             PropertyChanged(this, new PropertyChangedEventArgs(propertyExpression.GetPropertyName()));
         }
 
-        private void OnSourceBrowse()
+        private void SourceBrowseClicked()
         {
             const string dialogTitle = "Select English File";
             const string fileFilter = "Resource Files(*.resx)|*.resx|All Files(*.*)|*.*";
@@ -173,7 +173,7 @@ namespace TranslationHelper
             View.OpenBrowseFileDialog(dialogTitle, fileFilter, p => p.SourceFile);
         }
 
-        private void OnTargetBrowse()
+        private void TargetBrowseClicked()
         {
             const string dialogTitle = "Select Target File";
             const string fileFilter = "Resource Files(*.resx)|*.resx|All Files(*.*)|*.*";
@@ -181,7 +181,7 @@ namespace TranslationHelper
             View.OpenBrowseFileDialog(dialogTitle, fileFilter, p => p.TargetFile);
         }
 
-        private void OnTranslationFileBrowse()
+        private void TranslationFileBrowseClicked()
         {
             const string dialogTitle = "Select Translation File";
             const string fileFilter = "Excel SpreadSheet|*.xls;*.xlsx|All Files(*.*)|*.*";
@@ -189,12 +189,12 @@ namespace TranslationHelper
             View.OpenBrowseFileDialog(dialogTitle, fileFilter, p => p.TranslationFile);
         }
 
-        private void OnGoogleTranslationClick()
+        private void GoogleTranslationClicked()
         {
             TranslationFileEnabled = (!UseGoogleTranslationEngine);
         }
 
-        private void OnTranslateCommand()
+        private void TranslateButtonClicked()
         {
             try
             {
@@ -205,6 +205,7 @@ namespace TranslationHelper
 
                 Task.Factory.StartNew(() =>
                     {
+                        //  TODO: Extract this into it's own method to clarify (PerformTranslation)
                         dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
                         dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem { Comment = "Translation Started" }));
                         var stopWatch = new Stopwatch();
@@ -233,12 +234,12 @@ namespace TranslationHelper
             }
         }
         
-        private void OnExportCommand()
+        private void ExportButtonClicked()
         {
             try
             {
                 var dispatchService = new DispatchService();
-                var excelEngine = new ExcelTranslateEngine(dispatchService);
+                
 
                 dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
 
@@ -247,6 +248,7 @@ namespace TranslationHelper
                 
                 File.Copy((Environment.CurrentDirectory + "\\TranslationTemplate.xlsx"), exportFilename, true);
 
+                //  TODO: Refactor this out into the method (GetAllMatchingValues).
                 using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
                 {
                     var sourceInformation = resourceFileHelper.GetAllNameValuesFromSource();
@@ -260,9 +262,10 @@ namespace TranslationHelper
                                                   EnglishValue = srcInfo.Value,
                                                   Translation = trgInfo.Value
                                               };
-
-                    excelEngine.ExportValuesToWorkbook(exportingValues, exportFilename, 1);
                 }
+
+                var excelEngine = new ExcelTranslateEngine(dispatchService);
+                excelEngine.ExportValuesToWorkbook(exportingValues, exportFilename, 1);
 
                 dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
 
@@ -430,8 +433,6 @@ namespace TranslationHelper
         private void WriteValueToTargetFileWithOutput(ResourceFileHelper resourceFileHelper, KeyValuePair<string, string> sourceValue, string translatedValue)
         {
             resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-            //View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-            //                                                                                sourceValue.Key, sourceValue.Value, translatedValue))));
             View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(new TranslatedItem
                 { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, Translation = translatedValue })));
         }
@@ -445,6 +446,7 @@ namespace TranslationHelper
 
             (new DispatchService()).Invoke(() =>
             {
+                //  TODO: Pull this out into its own method name (better expressed in a sentence)
                 var vm = new OverwriteWarningViewModel(new OverwriteWarning())
                 {
                     Question = "Do you wish to overwrite the existing value with the newly translated one?",

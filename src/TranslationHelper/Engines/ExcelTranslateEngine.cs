@@ -146,7 +146,7 @@ namespace TranslationHelper.Engines
                 var englishValue = (range.Cells.Value2[rowIndex, ENGLISH_COLUMN] ?? String.Empty).ToString().Trim().ToLower();
                 var translatedValue = (range.Cells.Value2[rowIndex, TRANSLATED_VALUE_COLUMN] ?? String.Empty).ToString().Trim();
 
-                if (string.IsNullOrWhiteSpace(keyValue) & string.IsNullOrWhiteSpace(englishValue) & string.IsNullOrWhiteSpace(translatedValue))
+                if (string.IsNullOrWhiteSpace(keyValue) && string.IsNullOrWhiteSpace(englishValue) && string.IsNullOrWhiteSpace(translatedValue))
                     continue;
                 
                 translationResults.Add(new ExcelTranslation { EnglishValue = englishValue, Key = keyValue, Translation = translatedValue });
