@@ -44,14 +44,16 @@ namespace TranslationHelper.Engines
                 if (String.IsNullOrWhiteSpace(keyValue) == false)
                 {
                     resourceFileHelper.WriteNameValuePairToTarget(keyValue, translatedValue, true);
-                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", keyValue, englishValue, translatedValue) });
+                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = keyValue, EnglishValue = englishValue, Translation = translatedValue } });
                     continue;
                 }
 
                 Dictionary<String, String> sourceValues = resourceFileHelper.GetNameValuesFromSource(englishValue);
                 if (sourceValues == null || sourceValues.Any() == false)
                 {
-                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("WARNING - No Source Key could be found for value:'{0}'!  No translation can be made.", englishValue) });
+                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = "WARNING", EnglishValue = englishValue,
+                                                                                                      Translation = "No translation can be made.",
+                                                                                                      Comment = "No Source Key could be found!" } });
                     continue;
                 }
 
@@ -59,7 +61,7 @@ namespace TranslationHelper.Engines
                 {
                     var uniqueValue = sourceValues.Single();
                     resourceFileHelper.WriteNameValuePairToTarget(uniqueValue.Key, translatedValue, true);
-                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'", uniqueValue.Key, uniqueValue.Value, translatedValue) });
+                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = uniqueValue.Key, EnglishValue = uniqueValue.Value, Translation = translatedValue } });
                     continue;
                 }
 
@@ -77,8 +79,8 @@ namespace TranslationHelper.Engines
                             foreach (var sourceValue in sourceValues)
                             {
                                 resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                //                                                                     sourceValue.Key, sourceValue.Value, translatedValue) });
+                                ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, 
+                                                                                                                  Translation = translatedValue } });
                             }
                             break;
                         case MessageBoxResult.No:
@@ -94,8 +96,8 @@ namespace TranslationHelper.Engines
                                 if (keyResult == MessageBoxResult.Yes)
                                 {
                                     resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-                                    //ToolOutput.Invoke(this, new TranslatedItemEventArgs { Output = String.Format("Translated English Key:'{0}' Value:'{1}' => '{2}'",
-                                    //                                                                 sourceValue.Key, sourceValue.Value, translatedValue) });
+                                    ToolOutput.Invoke(this, new TranslatedItemEventArgs { Item = new TranslatedItem { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, 
+                                                                                                                      Translation = translatedValue } });
                                 }
                             }
                             break;

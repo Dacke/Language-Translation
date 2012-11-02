@@ -26,7 +26,7 @@ namespace TranslationHelperTests
         [Then]
         public void output_should_include_warning_message_when_missing_source_info()
         {
-            Assert.That((testOutput.Count(s => s.Comment == "WARNING - No Source Key could be found") > 0), Is.True);
+            Assert.That((testOutput.Count(s => s.DataKey == "WARNING") > 0), Is.True);
         }
     }
     
