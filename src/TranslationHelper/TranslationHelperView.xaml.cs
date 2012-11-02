@@ -62,7 +62,7 @@ namespace TranslationHelper
                 {
                     var item = Model.TranslatedItems.LastOrDefault();
                     if (item != null)
-                        lstStatus.ScrollIntoView(item);
+                        dgStatus.ScrollIntoView(item);
                 }));
         }
     }

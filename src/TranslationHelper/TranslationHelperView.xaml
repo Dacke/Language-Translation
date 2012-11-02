@@ -2,14 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Language Translation Utility"
-        Height="506" Width="876" 
+        Height="500" Width="870" 
         Icon="/Images\Select-Language-32x32.ico">
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Styles/List-Columns.xaml" />
-                <ResourceDictionary Source="Styles/List-Grid.xaml" />
                 <ResourceDictionary Source="Styles/ButtonStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
@@ -64,7 +62,15 @@
                 Grid.Row="7" Grid.Column="0" Margin="5,3,5,3" VerticalAlignment="Bottom" />
         <Button x:Name="cmdTranslate" Content="{Binding TranslateLabel}" Grid.Row="7" Grid.Column="1" Style="{StaticResource ButtonTemplate}" 
                 Command="{Binding TranslateCommand}"/>
-        <ListBox Name="lstStatus" Margin="5,8,5,3" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" DisplayMemberPath="Comment"
-                 Style="{StaticResource List-Grid}" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" />
+        <DataGrid x:Name="dgStatus" ItemsSource="{Binding Path=TranslatedItems, Mode=OneWay}" AlternatingRowBackground="Gainsboro" AlternationCount="2"
+                  AutoGenerateColumns="False" HorizontalGridLinesBrush="Transparent" VerticalGridLinesBrush="LightGray" EnableRowVirtualization="True"
+                  Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Key" Binding="{Binding DataKey}" />
+                <DataGridTextColumn Header="English Value" Binding="{Binding EnglishValue}" />
+                <DataGridTextColumn Header="Translation" Binding="{Binding Translation}" />
+                <DataGridTextColumn Header="Comments" Binding="{Binding Comment}" />
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

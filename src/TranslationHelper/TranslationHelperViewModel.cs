@@ -142,9 +142,10 @@ namespace TranslationHelper
             TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
-            SourceFile = @"C:\Users\eDorothy\Desktop\testfiles\EnglishResourceTestFile.resx";
-            TargetFile = @"C:\Users\eDorothy\Desktop\testfiles\empty.resx";
-            TranslationFile = @"C:\Users\eDorothy\Desktop\testfiles\ExcelSample.xlsx";
+            var desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            SourceFile = String.Format(@"{0}\testfiles\EnglishResourceTestFile.resx", desktopFolder);
+            TargetFile = String.Format(@"{0}\testfiles\empty.resx", desktopFolder);
+            TranslationFile = String.Format(@"{0}\testfiles\ExcelSample.xlsx", desktopFolder);
             //  DEBUGGING VALUES - COMMENT OUT DURING PRODUCTION
             
             View = view;
