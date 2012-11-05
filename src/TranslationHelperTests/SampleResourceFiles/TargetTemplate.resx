@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,97 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Active" xml:space="preserve">
-    <value>Active</value>
+  <data name="KeyInTarget" xml:space="preserve">
+    <value>Value Found In Target File</value>
   </data>
-  <data name="Add" xml:space="preserve">
-    <value>Add</value>
-  </data>
-  <data name="AgentType" xml:space="preserve">
-    <value>Agent Type</value>
-  </data>
-  <data name="AllowDBAttachments" xml:space="preserve">
-    <value>Attachments in database</value>
-  </data>
-  <data name="AllowDeleteReturnedProtocol" xml:space="preserve">
-    <value>Allow Deletion of Returned Protocols</value>
-  </data>
-  <data name="AllowFileLinks" xml:space="preserve">
-    <value>Links in file system</value>
-  </data>
-  <data name="Alternate" xml:space="preserve">
-    <value>Alternate</value>
-  </data>
-  <data name="AppointmentDate" xml:space="preserve">
-    <value>Appointment Date</value>
-  </data>
-  <data name="AuditTrails" xml:space="preserve">
-    <value>Record Audit Trails</value>
-  </data>
-  <data name="Building" xml:space="preserve">
-    <value>Building</value>
-  </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="CanVote" xml:space="preserve">
-    <value>Can Vote</value>
-  </data>
-  <data name="CaseSensitive" xml:space="preserve">
-    <value>Is Case Sensitive</value>
-  </data>
-  <data name="Cellphone" xml:space="preserve">
-    <value>Cell Phone</value>
-  </data>
-  <data name="ChangePassword" xml:space="preserve">
-    <value>Change Password</value>
-  </data>
-  <data name="Close" xml:space="preserve">
-    <value>Close</value>
-  </data>
-  <data name="Weaning" xml:space="preserve">
-    <value>Weaning</value>
-  </data>
-  <data name="Code" xml:space="preserve">
-    <value>Code</value>
-  </data>
-  <data name="CodeNumber" xml:space="preserve">
-    <value>Code Number</value>
-  </data>
-  <data name="ConfirmPassword" xml:space="preserve">
-    <value>Confirm Password</value>
-  </data>
-  <data name="CreateWeanings" xml:space="preserve">
-    <value>Create Weanings</value>
-  </data>
-  <data name="Continuee" xml:space="preserve">
-    <value>Continue</value>
-  </data>
-  <data name="Copyright" xml:space="preserve">
-    <value>Copyright 2009</value>
-  </data>
-  <data name="CurrentPassword" xml:space="preserve">
-    <value>Current Password</value>
-  </data>
-  <data name="Database" xml:space="preserve">
-    <value>Database</value>
-  </data>
-  <data name="DefaultWarningLevel" xml:space="preserve">
-    <value>Set Default Stress Warning Level to</value>
-  </data>
-  <data name="Delete" xml:space="preserve">
-    <value>Delete</value>
-  </data>
-  <data name="Department" xml:space="preserve">
-    <value>Department</value>
-  </data>
-  <data name="DepartmentName" xml:space="preserve">
-      <value>Department</value>
-  </data>
-  <data name="Departments" xml:space="preserve">
-    <value>Departments</value>
-  </data>
-  <data name="Description" xml:space="preserve">
-    <value>Description</value>
-  </data>  
 </root>
