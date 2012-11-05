@@ -23,3 +23,7 @@ Run the application again, this time browse for your translations file and click
 The application should prompt you before overwriting any translations that already exist in the file that do not match the translated value.
 
 Please if you have any improvements, fork this project and then submit a pull request.  This is version 1.0 of the software and may not provide all of the needed functionality.
+
+New Features:
+* The solution now takes care of unicode requests.  It can handle more languages that before!
+* If you translate a file, it will take the translated keys that match the source document and export them to an Excel spreadsheet.  This would enable you to send the Excel file to a human to perform the final "in context" translation and correct any errors.  This Excel file can then be selected in the "Translation File" field to overwrite the values in the target file.
