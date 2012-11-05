@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using TranslationHelper.Engines;
-using TranslationHelper.Enums;
 using TranslationHelper.Helpers;
 using TranslationHelper.Infos;
+using TranslationHelper.Services;
 
 namespace TranslationHelper
 {
@@ -29,8 +29,6 @@ namespace TranslationHelper
         private ObservableCollection<TranslatedItem> translatedItems;
 
         #endregion
-
-        #region Properties
 
         #region Headers
 
@@ -116,17 +114,9 @@ namespace TranslationHelper
         public ICommand TranslateFromGoogleCommand { get; set; }
         public ICommand TranslateCommand { get; set; }
         public ICommand ExportCommand { get; set; }
-
-        #endregion
-
-        #region Events
-
+        
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
-
-        #endregion
-
-        #region Public Methods
-
+        
         public TranslationHelperViewModel(ITranslationHelperView view)
         {
             TranslatedItems = new ObservableCollection<TranslatedItem>();
@@ -155,10 +145,6 @@ namespace TranslationHelper
             View = view;
             View.SetModel(this);
         }
-
-        #endregion
-
-        #region Private Methods
         
         private void OnPropertyChanged(Expression<Func<TranslationHelperViewModel, object>> propertyExpression)
         {
@@ -198,32 +184,10 @@ namespace TranslationHelper
         {
             try
             {
-                var dispatchService = new DispatchService();
                 ValidateArguments();
 
                 TranslatedItems.Clear();
-
-                Task.Factory.StartNew(() =>
-                    {
-                        //  TODO: Extract this into it's own method to clarify (PerformTranslation)
-                        dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Wait);
-                        dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem { Comment = "Translation Started" }));
-                        var stopWatch = new Stopwatch();
-                        stopWatch.Start();
-
-                        if (UseGoogleTranslationEngine)
-                            ParseFromGoogle();
-                        else
-                            ParseTranslationFile();
-
-                        stopWatch.Stop();
-                        dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem 
-                                { Comment = String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds) }));
-                        dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
-                        
-                        MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.", "Done",
-                                     MessageBoxButton.OK, MessageBoxImage.Information);
-                    }, TaskCreationOptions.AttachedToParent);
+                Task.Factory.StartNew(PerformTranslation, TaskCreationOptions.AttachedToParent);
             }
             catch (Exception ex)
             {
@@ -232,6 +196,36 @@ namespace TranslationHelper
                     Debugger.Break();
                 MessageBox.Show(ex.Message, ex.Source, MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void PerformTranslation()
+        {
+            var dispatchService = new DispatchService();
+            var googleEngine = new GoogleTranslateEngine { ToCulture = SelectedLanguageCode.Code };
+            dispatchService.Invoke(() => ((Window) View).Cursor = Cursors.Wait);
+            dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem {Comment = "Translation Started"}));
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            using (var langParser = new LanguageParsingService(dispatchService, googleEngine))
+            {
+                langParser.Translated += LangParserItemTranslated;
+
+                if (UseGoogleTranslationEngine)
+                    langParser.ParseFromGoogle(SourceFile, TargetFile);
+                else
+                    langParser.ParseFromExcel(SourceFile, TargetFile, TranslationFile);
+
+                langParser.Translated -= LangParserItemTranslated;
+            }
+
+            stopWatch.Stop();
+            dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem
+                {Comment = String.Format("Translation Completed.  ({0} seconds elapsed)", stopWatch.Elapsed.TotalSeconds)}));
+            dispatchService.Invoke(() => ((Window) View).Cursor = Cursors.Arrow);
+
+            MessageBox.Show("The translation is complete.  Please check the output window for a list of items that have been translated.",
+                            "Done", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         
         private void ExportButtonClicked()
@@ -248,23 +242,9 @@ namespace TranslationHelper
                 
                 File.Copy((Environment.CurrentDirectory + "\\TranslationTemplate.xlsx"), exportFilename, true);
 
-                //  TODO: Refactor this out into the method (GetAllMatchingValues).
-                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
-                {
-                    var sourceInformation = resourceFileHelper.GetAllNameValuesFromSource();
-                    var targetInformation = resourceFileHelper.GetAllNameValuesFromTarget();
+                var exportingValues = ExcelTranslations();
 
-                    var exportingValues = from srcInfo in sourceInformation
-                                          join trgInfo in targetInformation on srcInfo.Key equals trgInfo.Key
-                                          select new ExcelTranslation
-                                              {
-                                                  Key = trgInfo.Key,
-                                                  EnglishValue = srcInfo.Value,
-                                                  Translation = trgInfo.Value
-                                              };
-                }
-
-                var excelEngine = new ExcelTranslateEngine(dispatchService);
+                var excelEngine = new ExcelTranslateEngine(dispatchService, t => LangParserItemTranslated(this, new TranslatedItemEventArgs { Item = t }));
                 excelEngine.ExportValuesToWorkbook(exportingValues, exportFilename, 1);
 
                 dispatchService.Invoke(() => ((Window)View).Cursor = Cursors.Arrow);
@@ -278,6 +258,26 @@ namespace TranslationHelper
                     Debugger.Break();
                 MessageBox.Show(ex.Message, ex.Source, MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private IEnumerable<ExcelTranslation> ExcelTranslations()
+        {
+            IEnumerable<ExcelTranslation> exportingValues;
+            using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
+            {
+                var sourceInformation = resourceFileHelper.GetAllNameValuesFromSource();
+                var targetInformation = resourceFileHelper.GetAllNameValuesFromTarget();
+
+                exportingValues = from srcInfo in sourceInformation
+                                  join trgInfo in targetInformation on srcInfo.Key equals trgInfo.Key
+                                  select new ExcelTranslation
+                                      {
+                                          Key = trgInfo.Key,
+                                          EnglishValue = srcInfo.Value,
+                                          Translation = trgInfo.Value
+                                      };
+            }
+            return exportingValues;
         }
 
         private void ValidateArguments()
@@ -371,107 +371,9 @@ namespace TranslationHelper
             return result;
         }
 
-        private void ParseFromGoogle()
+        private void LangParserItemTranslated(object sender, TranslatedItemEventArgs translatedItemEventArgs)
         {
-            try
-            {
-                var translateHelper = new GoogleTranslateEngine { ToCulture = SelectedLanguageCode.Code };
-                var writeTargetResult = TargetWriteResponse.Skip;
-
-                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
-                {
-                    foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
-                    {
-                        var translatedValue = translateHelper.TranslateWordOrPhrase(sourcePair.Value);
-                        var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
-                        
-                        if (writeTargetResult != TargetWriteResponse.OverwriteAll)
-                        {
-                            writeTargetResult = OverwriteWarningWithResult(existingTargetValue, translatedValue);
-                            if (writeTargetResult == TargetWriteResponse.Cancel)
-                            {
-                                View.DisplayMessageBox("The translation operation has been aborted.", "Aborted", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
-                                break;
-                            }
-                        }
-
-                        if (writeTargetResult == TargetWriteResponse.Skip) continue;
-                        
-                        WriteValueToTargetFileWithOutput(resourceFileHelper, sourcePair, translatedValue);
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                View.DisplayMessageBox(String.Format("Description: {0}\n\nSource: {1}", ex.Message, ex.Source), "Error Occurred",
-                                       MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-            }
+            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(translatedItemEventArgs.Item)));
         }
-        
-        private void ParseTranslationFile()
-        {
-            try
-            {
-                var excelEngine = new ExcelTranslateEngine(new DispatchService());
-                excelEngine.ToolOutput += delegate(object sender, TranslatedItemEventArgs args)
-                    {
-                        View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(args.Item)));
-                    };
-
-                using (var resourceFileHelper = new ResourceFileHelper(SourceFile, TargetFile))
-                {
-                    excelEngine.TranslateWorkbook(resourceFileHelper, TranslationFile, 1);
-                }
-            }
-            catch (Exception ex)
-            {
-                View.DisplayMessageBox(String.Format("Description: {0}\n\nSource: {1}", ex.Message, ex.Source), "Error Occurred",
-                                       MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-            }
-        }
-
-        private void WriteValueToTargetFileWithOutput(ResourceFileHelper resourceFileHelper, KeyValuePair<string, string> sourceValue, string translatedValue)
-        {
-            resourceFileHelper.WriteNameValuePairToTarget(sourceValue.Key, translatedValue, true);
-            View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(new TranslatedItem
-                { DataKey = sourceValue.Key, EnglishValue = sourceValue.Value, Translation = translatedValue })));
-        }
-
-        private TargetWriteResponse OverwriteWarningWithResult(string existingTargetValue, string translatedValue)
-        {
-            if (string.IsNullOrWhiteSpace(existingTargetValue)) return TargetWriteResponse.Overwrite;
-            if (existingTargetValue.Equals(translatedValue, StringComparison.InvariantCultureIgnoreCase)) return TargetWriteResponse.Skip;
-
-            var response = TargetWriteResponse.Skip;
-
-            (new DispatchService()).Invoke(() =>
-            {
-                //  TODO: Pull this out into its own method name (better expressed in a sentence)
-                var vm = new OverwriteWarningViewModel(new OverwriteWarning())
-                {
-                    Question = "Do you wish to overwrite the existing value with the newly translated one?",
-                    Description = "A value already exists in the targeted resource file.",
-                    ExistingValue = existingTargetValue,
-                    TranslationValue = translatedValue,
-                };
-                vm.View.ShowDialog();
-                switch (vm.Answer)
-                {
-                    case OverwriteResult.Yes:
-                        response = TargetWriteResponse.Overwrite;
-                        break;
-                    case OverwriteResult.YesToAll:
-                        response = TargetWriteResponse.OverwriteAll;
-                        break;
-                    case OverwriteResult.Cancel:
-                        response = TargetWriteResponse.Cancel;
-                        break;
-                }
-            });
-
-            return response;
-        }
-
-        #endregion
     }
 }

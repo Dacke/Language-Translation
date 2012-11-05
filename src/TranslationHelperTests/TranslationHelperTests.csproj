@@ -72,10 +72,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="SpecificationsBase.cs" />
-    <Compile Include="when_resource_file_helper_spec.cs" />
+    <Compile Include="when_language_parsing_service.cs" />
+    <Compile Include="when_resource_file_helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="when_excel_translation_engine_spec.cs" />
-    <Compile Include="when_google_translation_engine_online_spec.cs" />
+    <Compile Include="when_excel_translation_engine.cs" />
+    <Compile Include="when_google_translation_engine_online.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TranslationHelper\TranslationHelper.csproj">

@@ -9,7 +9,14 @@ using TranslationHelper.Infos;
 
 namespace TranslationHelper.Engines
 {
-    public class GoogleTranslateEngine
+    public interface IGoogleTranslateEngine
+    {
+        string FromCulture { get; set; }
+        string ToCulture { get; set; }
+        string TranslateWordOrPhrase(string wordOrPhraseToTranslate);
+    }
+
+    public class GoogleTranslateEngine : IGoogleTranslateEngine
     {
         private const string englishCulture = "en";
         private const string googleUrlFormat = "http://translate.google.com/translate_a/t?client=webapp&sl={0}&tl={1}&hl=en&q={2}&sc=1";

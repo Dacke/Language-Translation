@@ -90,6 +90,7 @@
     <Compile Include="Helpers\PropertyHelper.cs" />
     <Compile Include="Helpers\ResourceFileHelper.cs" />
     <Compile Include="Enums\TargetWriteResponse.cs" />
+    <Compile Include="Services\LanguageParsingService.cs" />
     <Compile Include="TranslationHelperViewModel.cs" />
     <Page Include="OverwriteWarning.xaml">
       <SubType>Designer</SubType>

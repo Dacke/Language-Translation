@@ -41,7 +41,7 @@ namespace TranslationHelperTests
             var dispatchService = MockRepository.GenerateMock<IDispatchService>();
             dispatchService.Stub(m => m.Invoke<MessageBoxResult>(null)).IgnoreArguments().Return(MessageBoxResult.No);
 
-            sut = new ExcelTranslateEngine(dispatchService);
+            sut = new ExcelTranslateEngine(dispatchService, item => base.SutToolOutput(this, new TranslatedItemEventArgs { Item = item }));
         }
 
         [Then]
@@ -160,16 +160,14 @@ namespace TranslationHelperTests
             
             testOutput = new List<TranslatedItem>();
 
-            sut = new ExcelTranslateEngine(dispatchService);
+            sut = new ExcelTranslateEngine(dispatchService, item => SutToolOutput(this, new TranslatedItemEventArgs{ Item = item}));
         }
 
-        private void SutOnToolOutput(object sender, TranslatedItemEventArgs outputEventArgs) { testOutput.Add(outputEventArgs.Item); }
+        protected void SutToolOutput(object sender, TranslatedItemEventArgs outputEventArgs) { testOutput.Add(outputEventArgs.Item); }
 
         protected override void When()
         {
-            sut.ToolOutput += SutOnToolOutput;
             sut.TranslateWorkbook(resourceFileHelper, excelFilePath, WORKSHEET_NUMBER);
-            sut.ToolOutput += SutOnToolOutput;
         }
     }
 }
