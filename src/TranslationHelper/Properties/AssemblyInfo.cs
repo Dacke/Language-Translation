@@ -7,11 +7,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TranslationHelper")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Translation Helper")]
+[assembly: AssemblyDescription("Language Translation Utility designed to be used by developers who have a need to globalize their solution through the use of resource files.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("TranslationHelper")]
+[assembly: AssemblyProduct("Translation Helper")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
