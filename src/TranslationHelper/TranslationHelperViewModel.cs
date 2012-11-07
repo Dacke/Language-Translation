@@ -284,15 +284,23 @@ namespace TranslationHelper
         {
             if (String.IsNullOrWhiteSpace(SourceFile) || SourceFile.EndsWith("resx") == false)
                 throw new Exception("You have not filled in a value for the English String Resource File. (*.resx)");
+            
+            if (String.IsNullOrWhiteSpace(SourceFile) == false && File.Exists(SourceFile) == false)
+                throw new Exception(String.Format("The specified file '{0}' cannot be found in the file system.", SourceFile));
 
             if (String.IsNullOrWhiteSpace(TargetFile) || TargetFile.EndsWith("resx") == false)
                 throw new Exception("You have not filled in a value for the Target Resource File. (*.resx)");
 
+            if (String.IsNullOrWhiteSpace(TargetFile) == false && File.Exists(TargetFile) == false)
+                throw new Exception(String.Format("The specified file '{0}' cannot be found in the file system.", TargetFile));
+
             if (UseGoogleTranslationEngine != true)
             {
-                if (String.IsNullOrWhiteSpace(TranslationFile) ||
-                    (TranslationFile.EndsWith("xls") == false & TranslationFile.EndsWith("xlsx") == false))
+                if (String.IsNullOrWhiteSpace(TranslationFile) || (TranslationFile.EndsWith("xls") == false & TranslationFile.EndsWith("xlsx") == false))
                     throw new Exception("You have not filled in a value for the Translations File. (*.xls, *.xlsx)");
+
+                if (String.IsNullOrWhiteSpace(TranslationFile) == false && File.Exists(TranslationFile) == false)
+                    throw new Exception(String.Format("The specified file '{0}' cannot be found in the file system.", TranslationFile));
             }
         }
 
