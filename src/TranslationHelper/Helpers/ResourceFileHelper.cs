@@ -137,6 +137,15 @@ namespace TranslationHelper.Helpers
             if (rootElement == null) 
                 throw new Exception("No <root> element can be found in the file loaded.  Please verify that you have selected a resource file that follows the Microsoft ResX Schema version 2.0");
 
+            var duplicateKeys = rootElement.Elements(DATA_ELEMENT)
+                                           .GroupBy(e => e.Attribute(DATA_NAME_ATTRIBUTE).Value)
+                                           .ToDictionary(g => g.Key, g => g.Count())
+                                           .Where(d => d.Value > 1)
+                                           .ToArray();
+            if (duplicateKeys.Any())
+                throw new Exception(String.Format("The resource files is invalid because it has duplicate keys!  Please remove the following duplicates and then proceed.\n\n{0}",
+                                                  string.Join("\nKey: {0}, Count: {1}", duplicateKeys.Select(k => k.Key), duplicateKeys.Select(v => v.Value))));
+
             return rootElement;
         }
 
