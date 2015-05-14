@@ -23,8 +23,9 @@ namespace TranslationHelper
         private string sourceFile;
         private string targetFile;
         private string translationFile;
-        private bool useGoogleTranslationEngine;
+        private bool _useOnlineTranslationSource;
         private bool translationFileEnabled;
+        private OnlineSource selectedTranslationSource;
         private LanguageCode selectedLanguageCode;
         private ObservableCollection<TranslatedItem> translatedItems;
 
@@ -38,7 +39,7 @@ namespace TranslationHelper
         public string TargetResourceFileLabel { get { return "Target Resource File"; } }
         public string TranslateLabel { get { return "Translate"; } }
         public string TranslationsFileLabel { get { return "Translations File"; } }
-        public string UseGoogleLabel { get { return "Check to use Google for the translation engine"; } }
+        public string UseOnlineTranslationSourceLabel { get { return "Check to use online translation engine"; } }
         public string ExportLabel { get { return "Export"; } }
 
         #endregion
@@ -78,13 +79,22 @@ namespace TranslationHelper
                 OnPropertyChanged(p => p.TranslationFileEnabled);
             }
         }
-        public bool UseGoogleTranslationEngine
+        public bool UseOnlineTranslationSource
         {
-            get { return useGoogleTranslationEngine; }
+            get { return _useOnlineTranslationSource; }
             set
             {
-                useGoogleTranslationEngine = value;
-                OnPropertyChanged(p => p.UseGoogleTranslationEngine);
+                _useOnlineTranslationSource = value;
+                OnPropertyChanged(p => p.UseOnlineTranslationSource);
+            }
+        }
+        public OnlineSource SelectedOnlineTranslationSource
+        {
+            get { return selectedTranslationSource; }
+            set
+            {
+                selectedTranslationSource = value;
+                OnPropertyChanged(p => p.SelectedOnlineTranslationSource);
             }
         }
         public LanguageCode SelectedLanguageCode
@@ -107,11 +117,12 @@ namespace TranslationHelper
             }
         }
         public ObservableCollection<LanguageCode> LanguageCodes { get; private set; }
+        public ObservableCollection<OnlineSource> OnlineSources { get; private set; }
         public ITranslationHelperView View { get; set; }
         public ICommand BrowseSourceFileCommand { get; set; }
         public ICommand BrowseTargetFileCommand { get; set; }
         public ICommand BrowseTranslationFileCommand { get; set; }
-        public ICommand TranslateFromGoogleCommand { get; set; }
+        public ICommand TranslateFromOnlineSourceCommand { get; set; }
         public ICommand TranslateCommand { get; set; }
         public ICommand ExportCommand { get; set; }
         
@@ -121,17 +132,20 @@ namespace TranslationHelper
         {
             TranslatedItems = new ObservableCollection<TranslatedItem>();
             LanguageCodes = FillLanguageCodes();
-            UseGoogleTranslationEngine = true;
+            OnlineSources = FillOnlineSources();
+            UseOnlineTranslationSource = true;
+            SelectedOnlineTranslationSource = OnlineSources.Single(src => src.Type == typeof(GoogleTranslateEngine));
             SelectedLanguageCode = LanguageCodes.Single(lc => lc.Code == "es");
+            
 
             BrowseSourceFileCommand = new DelegateCommand(m => SourceBrowseClicked());
             BrowseTargetFileCommand = new DelegateCommand(m => TargetBrowseClicked());
             BrowseTranslationFileCommand = new DelegateCommand(m => TranslationFileBrowseClicked());
-            TranslateFromGoogleCommand = new DelegateCommand(m => GoogleTranslationClicked());
+            TranslateFromOnlineSourceCommand = new DelegateCommand(m => OnlineTranslationClicked());
             TranslateCommand = new DelegateCommand(m => TranslateButtonClicked());
             ExportCommand = new DelegateCommand(m => ExportButtonClicked());
 
-            GoogleTranslationClicked();
+            OnlineTranslationClicked();
 
             TranslatedItems.CollectionChanged += (sender, args) => { if (View != null) View.ScrollOutput(); };
 
@@ -175,9 +189,9 @@ namespace TranslationHelper
             View.OpenBrowseFileDialog(dialogTitle, fileFilter, p => p.TranslationFile);
         }
 
-        private void GoogleTranslationClicked()
+        private void OnlineTranslationClicked()
         {
-            TranslationFileEnabled = (!UseGoogleTranslationEngine);
+            TranslationFileEnabled = (!UseOnlineTranslationSource);
         }
 
         private void TranslateButtonClicked()
@@ -201,18 +215,18 @@ namespace TranslationHelper
         private void PerformTranslation()
         {
             var dispatchService = new DispatchService();
-            var googleEngine = new GoogleTranslateEngine { ToCulture = SelectedLanguageCode.Code };
+            var onlineTranslationEngine = CreateTranslationEngine(SelectedOnlineTranslationSource.Type, SelectedLanguageCode.Code);
             dispatchService.Invoke(() => ((Window) View).Cursor = Cursors.Wait);
             dispatchService.Invoke(() => TranslatedItems.Add(new TranslatedItem {Comment = "Translation Started"}));
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            using (var langParser = new LanguageParsingService(dispatchService, googleEngine))
+            using (var langParser = new LanguageParsingService(dispatchService, onlineTranslationEngine))
             {
                 langParser.Translated += LangParserItemTranslated;
 
-                if (UseGoogleTranslationEngine)
-                    langParser.ParseFromGoogle(SourceFile, TargetFile);
+                if (UseOnlineTranslationSource)
+                    langParser.ParseFromOnlineSource(SourceFile, TargetFile);
                 else
                     langParser.ParseFromExcel(SourceFile, TargetFile, TranslationFile);
 
@@ -294,7 +308,7 @@ namespace TranslationHelper
             if (String.IsNullOrWhiteSpace(TargetFile) == false && File.Exists(TargetFile) == false)
                 throw new Exception(String.Format("The specified file '{0}' cannot be found in the file system.", TargetFile));
 
-            if (UseGoogleTranslationEngine != true)
+            if (UseOnlineTranslationSource != true)
             {
                 if (String.IsNullOrWhiteSpace(TranslationFile) || (TranslationFile.EndsWith("xls") == false & TranslationFile.EndsWith("xlsx") == false))
                     throw new Exception("You have not filled in a value for the Translations File. (*.xls, *.xlsx)");
@@ -302,6 +316,17 @@ namespace TranslationHelper
                 if (String.IsNullOrWhiteSpace(TranslationFile) == false && File.Exists(TranslationFile) == false)
                     throw new Exception(String.Format("The specified file '{0}' cannot be found in the file system.", TranslationFile));
             }
+        }
+
+        private static ObservableCollection<OnlineSource> FillOnlineSources()
+        {
+            var result = new ObservableCollection<OnlineSource>
+                {
+                    new OnlineSource { Type = typeof(GoogleTranslateEngine) , Name = "Google" },
+                    new OnlineSource { Type = typeof(BingTranslateEngine), Name = "Bing" },
+                };
+
+            return result;
         }
 
         private static ObservableCollection<LanguageCode> FillLanguageCodes()
@@ -330,6 +355,7 @@ namespace TranslationHelper
                     new LanguageCode {Code = "tl", Name = "Filipino"},
                     new LanguageCode {Code = "fi", Name = "Finnish"},
                     new LanguageCode {Code = "fr", Name = "French"},
+                    new LanguageCode {Code = "fr-CA", Name = "French Canadian"},
                     new LanguageCode {Code = "gl", Name = "Galician"},
                     new LanguageCode {Code = "ka", Name = "Georgian"},
                     new LanguageCode {Code = "de", Name = "German"},
@@ -363,6 +389,7 @@ namespace TranslationHelper
                     new LanguageCode {Code = "sk", Name = "Slovak"},
                     new LanguageCode {Code = "sl", Name = "Slovenian"},
                     new LanguageCode {Code = "es", Name = "Spanish"},
+                    new LanguageCode {Code = "es-MX", Name = "Spanish, Mexico"},
                     new LanguageCode {Code = "sw", Name = "Swahili"},
                     new LanguageCode {Code = "sv", Name = "Swedish"},
                     new LanguageCode {Code = "ta", Name = "Tamil"},
@@ -382,6 +409,19 @@ namespace TranslationHelper
         private void LangParserItemTranslated(object sender, TranslatedItemEventArgs translatedItemEventArgs)
         {
             View.Dispatcher.BeginInvoke(new Action(() => TranslatedItems.Add(translatedItemEventArgs.Item)));
+        }
+
+        private ITranslateEngine CreateTranslationEngine(Type engineType, string selectedLanguageCode)
+        {
+            switch (engineType.Name)
+            {
+                case "GoogleTranslateEngine":
+                    return new GoogleTranslateEngine { ToCulture = selectedLanguageCode };
+                case "BingTranslateEngine":
+                    return new BingTranslateEngine { ToCulture = selectedLanguageCode };
+                default:
+                    throw new ArgumentOutOfRangeException("engineType", engineType.Name, "The selected translation engine type has not yet been created.");
+            }
         }
     }
 }

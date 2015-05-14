@@ -10,19 +10,19 @@ namespace TranslationHelper.Services
     public class LanguageParsingService : IDisposable
     {
         private readonly IDispatchService dispatchService;
-        private readonly IGoogleTranslateEngine googleEngine;
+        private readonly ITranslateEngine onlineTranslationEngine;
 
         public event EventHandler<TranslatedItemEventArgs> Translated = delegate { };
         
-        public LanguageParsingService(IDispatchService dispatchService, IGoogleTranslateEngine googleEngine)
+        public LanguageParsingService(IDispatchService dispatchService, ITranslateEngine onlineTranslationEngine)
         {
             this.dispatchService = dispatchService;
-            this.googleEngine = googleEngine;
+            this.onlineTranslationEngine = onlineTranslationEngine;
         }
 
         public void Dispose() { }
 
-        public void ParseFromGoogle(string sourceFile, string targetFile)
+        public void ParseFromOnlineSource(string sourceFile, string targetFile)
         {
             var writeTargetResult = TargetWriteResponse.Skip;
 
@@ -30,7 +30,7 @@ namespace TranslationHelper.Services
             {
                 foreach (var sourcePair in resourceFileHelper.GetAllNameValuesFromSource())
                 {
-                    var translatedValue = googleEngine.TranslateWordOrPhrase(sourcePair.Value);
+                    var translatedValue = onlineTranslationEngine.TranslateWordOrPhrase(sourcePair.Value);
                     var existingTargetValue = resourceFileHelper.GetValueFromTargetUsingKey(sourcePair.Key);
 
                     if (writeTargetResult != TargetWriteResponse.OverwriteAll)
