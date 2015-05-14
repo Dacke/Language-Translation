@@ -41,8 +41,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Office.Interop.Excel, Version=12.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c">
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>..\..\..\..\Windows\assembly\GAC_MSIL\Microsoft.Office.Interop.Excel\15.0.0.0__71e9bce111e9429c\Microsoft.Office.Interop.Excel.dll</HintPath>
     </Reference>
     <Reference Include="Remotion">
       <HintPath>packages\LinqToExcel.1.6.1\lib\Remotion.dll</HintPath>
@@ -74,13 +76,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Engines\BingTranslateEngine.cs" />
     <Compile Include="Engines\ExcelTranslateEngine.cs" />
+    <Compile Include="Engines\ITranslateEngine.cs" />
     <Compile Include="Helpers\DelegateCommand.cs" />
     <Compile Include="Helpers\DispatcherService.cs" />
     <Compile Include="Helpers\IResourceFileHelper.cs" />
+    <Compile Include="Infos\BingTranslationResult.cs" />
     <Compile Include="Infos\ExcelTranslation.cs" />
-    <Compile Include="Infos\GoogleTranslationResult.cs" />
     <Compile Include="Enums\OverwriteResult.cs" />
+    <Compile Include="Infos\OnlineSource.cs" />
     <Compile Include="Infos\OutputEventArgs.cs" />
     <Compile Include="Infos\TranslatedItem.cs" />
     <Compile Include="OverwriteWarning.xaml.cs">

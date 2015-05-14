@@ -36,7 +36,7 @@ namespace TranslationHelperTests
             dispatchService.Stub(m => m.Invoke<MessageBoxResult>(null)).IgnoreArguments().Return(MessageBoxResult.Yes);
             dispatchService.Stub(m => m.Invoke<TargetWriteResponse>(null)).IgnoreArguments().Return(TargetWriteResponse.Overwrite);
 
-            var googleEngine = MockRepository.GenerateMock<IGoogleTranslateEngine>();
+            var googleEngine = MockRepository.GenerateMock<ITranslateEngine>();
             googleEngine.Stub(m => m.FromCulture).PropertyBehavior().Return("en");
             googleEngine.Stub(m => m.ToCulture).PropertyBehavior().Return("es");
             googleEngine.Stub(m => m.TranslateWordOrPhrase("Value Found In Target File")).Return(VALUE_RETURN);
@@ -51,7 +51,7 @@ namespace TranslationHelperTests
 
         protected override void When()
         {
-            sut.ParseFromGoogle(sourceFilePath, targetFilePath);
+            sut.ParseFromOnlineSource(sourceFilePath, targetFilePath);
         }
 
         [Then]

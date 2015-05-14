@@ -72,6 +72,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="SpecificationsBase.cs" />
+    <Compile Include="when_bing_translation_engine_online.cs" />
     <Compile Include="when_language_parsing_service.cs" />
     <Compile Include="when_resource_file_helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

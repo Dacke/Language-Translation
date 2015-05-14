@@ -3,25 +3,23 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Cache;
 using System.Web;
 using System.Web.Script.Serialization;
 using TranslationHelper.Infos;
 
 namespace TranslationHelper.Engines
 {
-    public class GoogleTranslateEngine : ITranslateEngine
+    public class BingTranslateEngine : ITranslateEngine
     {
         private const string englishCulture = "en";
-        //private const string googleUrlFormat = "http://translate.google.com/translate_a/single?client=webapp&sl={0}&tl={1}&hl=en&q={2}&sc=1";
-        private const string googleUrlFormat = "http://translate.google.com/translate_a/single?client=webapp&sl={0}&tl={1}&hl=en&dt=bd&dt=ld&dt=qca&dt=rm&dt=t&source=btn&ssel=5&tsel=5&kc=0&tk=520999|681256&q={2}";
-        
+        private const string bingUrlFormat = "http://api.microsofttranslator.com/v2/ajax.svc/TranslateArray2?appId=%22T2gRWJdUpuqSW6U0s8nI73Ayyh2q4S5Z1dTYz9Dha1Xg*%22&texts=%5B%22{2}%22%5D&from=%22{0}%22&to=%22{1}%22";
+
         private JavaScriptSerializer javaScriptSerializer;
 
         public string FromCulture { get; set; }
         public string ToCulture { get; set; }
 
-        public GoogleTranslateEngine()
+        public BingTranslateEngine()
         {
             FromCulture = englishCulture;
             ToCulture = englishCulture;
@@ -35,7 +33,7 @@ namespace TranslationHelper.Engines
 
             try
             {
-                var url = String.Format(googleUrlFormat, FromCulture, ToCulture, HttpUtility.UrlEncode(wordOrPhraseToTranslate));
+                var url = String.Format(bingUrlFormat, FromCulture, ToCulture, HttpUtility.UrlEncode(wordOrPhraseToTranslate));
                 var webReq = CreateTranslationRequest(url);
                 using (var webResponse = webReq.GetResponse())
                 {
@@ -47,7 +45,7 @@ namespace TranslationHelper.Engines
                         var streamReader = new StreamReader(responseStream, System.Text.Encoding.UTF8);
                         var responseData = streamReader.ReadToEnd();
 
-                        translatedValue = GetTranslatedValueFromResponse(responseData);
+                        translatedValue = GetTranslatedValueFromJson(responseData);
                     }
                 }                
             }
@@ -65,26 +63,20 @@ namespace TranslationHelper.Engines
         {
             var webReq = (HttpWebRequest)WebRequest.Create(url);
             webReq.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            webReq.CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore);
             webReq.ContentType = "application/json";
-            webReq.Accept = "en-US,en;q=0.5";
             webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0";
-            webReq.Referer = "http://translate.google.com/m/translate";
-            webReq.Host = "translate.google.com";
+            webReq.Referer = "https://www.bing.com/translator/";
 
             return webReq;
         }
 
-        private string GetTranslatedValueFromResponse(string page)
+        private string GetTranslatedValueFromJson(string page)
         {
-            var rawValues = page.Split(new [] { @""",""" }, StringSplitOptions.RemoveEmptyEntries);
-            if (rawValues.Length < 2)
-                return null;
-            
-            var translatedValue = rawValues.First().Substring(4).TrimEnd('"');
-            var englishValue = rawValues[0].TrimEnd(']').Trim('"');
+            var json = javaScriptSerializer.Deserialize<BingTranslationResult[]>(page);
+            if (json.Any())
+                return json[0].TranslatedText;
 
-            return (string.IsNullOrWhiteSpace(translatedValue) == false) ? translatedValue : englishValue;
+            return null;
         }
     }
 }

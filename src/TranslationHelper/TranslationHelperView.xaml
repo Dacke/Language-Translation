@@ -40,16 +40,20 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="200" />
             </Grid.ColumnDefinitions>
-            <CheckBox x:Name="chkTranslateFromGoogle" Content="{Binding UseGoogleLabel}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Margin="3" 
-                      IsChecked="{Binding UseGoogleTranslationEngine}" Command="{Binding TranslateFromGoogleCommand }" >
+            <CheckBox x:Name="chkTranslateFromOnlineSource" Content="{Binding UseOnlineTranslationSourceLabel}" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Margin="3" 
+                      IsChecked="{Binding UseOnlineTranslationSource}" Command="{Binding TranslateFromOnlineSourceCommand }" >
                 <CheckBox.CommandParameter>
-                    <Binding Path="IsChecked" ElementName="chkTranslateFromGoogle" />
+                    <Binding Path="IsChecked" ElementName="chkTranslateFromOnlineSource" />
                 </CheckBox.CommandParameter>
             </CheckBox>
-            <ComboBox x:Name="comboLanguageCode" ItemsSource="{Binding Path=LanguageCodes, Mode=OneWay}" DisplayMemberPath="Name" SelectedIndex="1" 
+            <ComboBox x:Name="comboOnlineSource" ItemsSource="{Binding Path=OnlineSources, Mode=OneWay}" DisplayMemberPath="Name" SelectedIndex="1" 
                       Margin="3" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" 
-                      IsEnabled="{Binding UseGoogleTranslationEngine, Mode=OneWay}" SelectedValue="{Binding SelectedLanguageCode, Mode=TwoWay}"  />
+                      IsEnabled="{Binding UseOnlineTranslationSource, Mode=OneWay}" SelectedValue="{Binding SelectedOnlineTranslationSource, Mode=TwoWay}"  />
+            <ComboBox x:Name="comboLanguageCode" ItemsSource="{Binding Path=LanguageCodes, Mode=OneWay}" DisplayMemberPath="Name" SelectedIndex="1" 
+                      Margin="3" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" 
+                      IsEnabled="{Binding UseOnlineTranslationSource, Mode=OneWay}" SelectedValue="{Binding SelectedLanguageCode, Mode=TwoWay}"  />
         </Grid>
         <Label Content="{Binding TranslationsFileLabel}" Grid.Row="5" Grid.Column="0" />
         <TextBox x:Name="txtTranslationsFile" Text="{Binding Path=TranslationFile, Mode=TwoWay}" IsEnabled="{Binding TranslationFileEnabled, Mode=OneWay}" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,3,5,3" />
